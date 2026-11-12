@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101827" />
+    <title>Shop Rush 2 | Erfan Edition</title>
+  </head>
+  <body>
+    <div id="app">
+      <section id="intro" class="intro" aria-label="صفحه ورود">
+        <div class="intro-grid"></div>
+        <div class="intro-orbit orbit-one"></div><div class="intro-orbit orbit-two"></div>
+        <div class="intro-content">
+          <div class="intro-mark">S<span>2</span></div>
+          <p class="intro-kicker">A NEW STORE. A NEW STORY.</p>
+          <h1 class="intro-title">SHOP RUSH <span>2</span></h1>
+          <div class="intro-line"></div>
+          <p class="intro-name">نسخه اختصاصی <strong>عرفان</strong></p>
+          <p class="intro-loading">در حال آماده‌سازی فروشگاه<span class="dots">...</span></p>
+          <div class="intro-progress"><i></i></div>
+        </div>
+        <div class="intro-corner">ERFAN EDITION <span>•</span> 2026</div>
+      </section>
+
+      <main id="game" class="game hidden">
+        <canvas id="world"></canvas>
+        <header class="topbar">
+          <div class="brand"><span class="brand-icon">S2</span><div><b>SHOP RUSH 2</b><small>ERFAN EDITION</small></div></div>
+          <div class="stats">
+            <div class="stat"><small id="moneyLabel">موجودی</small><b id="money">۱٬۰۰۰ $</b></div>
+            <div class="stat"><small id="customersLabel">مشتری‌ها</small><b id="customers">۰</b></div>
+            <div class="stat"><small id="levelLabel">فروشگاه</small><b id="level">سطح ۱</b></div>
+          </div>
+          <button id="langBtn" class="icon-btn" title="Change language">FA / EN</button>
+          <button id="pauseBtn" class="icon-btn" title="Pause">Ⅱ</button>
+        </header>
+
+        <aside class="side-panel">
+          <div class="panel-heading"><span class="live-dot"></span><div><b id="panelTitle">مدیریت فروشگاه</b><small id="panelSubtitle">داشبورد زنده</small></div></div>
+          <div class="metric"><span id="incomeLabel">درآمد امروز</span><b id="income">$0</b></div>
+          <div class="metric"><span id="stockLabel">موجودی انبار</span><b id="stock">۲۴</b></div>
+          <div class="metric"><span id="emptyLabel">قفسه‌های خالی</span><b id="empty">۰</b></div>
+          <div class="panel-actions">
+            <button id="restockBtn" class="action-btn"><span>📦 شارژ قفسه‌ها</span><small>۱۰۰$</small></button>
+            <button id="upgradeBtn" class="action-btn"><span>⬆️ ارتقای فروشگاه</span><small>۵۰۰$</small></button>
+            <button id="hireBtn" class="action-btn"><span>👷 استخدام کارمند</span><small>۳۰۰$</small></button>
+            <button id="saveBtn" class="action-btn secondary">💾 ذخیره بازی</button>
+          </div>
+          <p id="hint" class="hint">حرکت: WASD یا کلیدهای جهت‌دار<br>چرخش دوربین: حرکت ماوس</p>
+        </aside>
+
+        <div id="bottomTip" class="bottom-tip">به فروشگاه خوش آمدی، عرفان! برای حرکت از WASD استفاده کن.</div>
+        <div id="toast" class="toast" role="status"></div>
+        <div id="pause" class="pause hidden">
+          <div class="pause-card"><div class="brand-icon big">S2</div><h2 id="pauseTitle">بازی متوقف شد</h2><p id="pauseText">فروشگاه منتظر مدیریت توست.</p><button id="resumeBtn" class="primary-btn">ادامه بازی</button></div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
