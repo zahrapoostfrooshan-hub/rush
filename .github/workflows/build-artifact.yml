@@ -1,0 +1,46 @@
+name: Build Windows EXE (Downloadable Artifact)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-artifact.yml"
+      - "src/**"
+      - "electron/**"
+      - "index.html"
+      - "package.json"
+      - "vite.config.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build app
+        run: npm run build
+
+      - name: Package Windows EXE files
+        run: npx electron-builder --win nsis portable --publish never
+
+      - name: Upload EXE files as Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shop-Rush-2-Windows-EXE
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 30
