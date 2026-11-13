@@ -109,32 +109,33 @@ function drawMonitor(){
  const c=monitorCanvas,x=monitorCtx;x.clearRect(0,0,c.width,c.height);
  const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'#142f40');g.addColorStop(1,'#071720');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
  x.direction='rtl';x.textAlign='right';x.fillStyle='#83e6c0';x.font='bold 28px Tahoma';x.fillText('ERFAN MARKET  |  صندوق فروش',c.width-28,38);
- x.strokeStyle='#36596a';x.lineWidth=2;x.beginPath();x.moveTo(24,55);x.lineTo(c.width-24,55);x.stroke();
- // invoice area
- x.fillStyle='#9ab5c4';x.font='bold 20px Tahoma';x.fillText('فاکتور کالاها',c.width-300,91);
- x.fillStyle='#9ab5c4';x.font='bold 17px Tahoma';x.fillText('شرح کالا',c.width-30,126);x.textAlign='left';x.fillText('قیمت',c.width-260,126);
- let y=164;
- scanned.slice(-5).forEach(p=>{x.textAlign='right';x.fillStyle='#eef7f6';x.font='19px Tahoma';x.fillText(p.name,c.width-30,y);x.textAlign='left';x.fillStyle='#9be8c8';x.fillText(p.price.toLocaleString('fa-IR'),c.width-260,y);y+=36;});
- if(scanned.length===0){x.textAlign='center';x.fillStyle='#708b9b';x.font='18px Tahoma';x.fillText('منتظر اسکن کالا...',c.width*.68,190);}
- // calculator panel built into the POS display
- const px=28,py=80,pw=315,ph=360;
- x.fillStyle='#1b3543';x.beginPath();x.roundRect(px,py,pw,ph,16);x.fill();
+ x.fillStyle='#7f9dab';x.font='16px Tahoma';x.fillText('صندوق شماره ۰۱  •  سیستم فروش فعال',c.width-28,65);
+ x.strokeStyle='#36596a';x.lineWidth=2;x.beginPath();x.moveTo(24,78);x.lineTo(c.width-24,78);x.stroke();
+ // Full live receipt, including products that have not been scanned yet.
+ x.fillStyle='#9ab5c4';x.font='bold 21px Tahoma';x.fillText('فاکتور جاری',c.width-28,111);
+ x.fillStyle='#9ab5c4';x.font='bold 16px Tahoma';x.fillText('نام کالا',c.width-30,145);
+ x.textAlign='left';x.fillText('قیمت',c.width-280,145);x.fillText('وضعیت',c.width-125,145);
+ const visible=order.slice(0,8);let y=181;
+ visible.forEach((p,i)=>{
+  const done=i<scanned.length;
+  if(i%2===0){x.fillStyle='rgba(110,160,180,.09)';x.fillRect(22,y-24,c.width-44,34);}
+  x.direction='rtl';x.textAlign='right';x.fillStyle=done?'#eef7f6':'#c2d1d8';x.font='18px Tahoma';x.fillText(p.name,c.width-30,y);
+  x.direction='ltr';x.textAlign='left';x.fillStyle='#9be8c8';x.fillText(p.price.toLocaleString('fa-IR'),c.width-280,y);
+  x.direction='rtl';x.textAlign='right';x.fillStyle=done?'#7ef0b8':'#e7c77d';x.font='15px Tahoma';x.fillText(done?'ثبت شد':i===itemIndex?'در انتظار اسکن':'در صف',c.width-30,y);
+  y+=36;
+ });
+ if(order.length===0){x.textAlign='center';x.fillStyle='#708b9b';x.font='18px Tahoma';x.fillText('در انتظار سفارش مشتری...',c.width*.68,205);}
+ // Calculator is drawn as part of the physical monitor, not as an overlay.
+ const px=28,py=96,pw=315,ph=350;
+ x.direction='rtl';x.fillStyle='#1b3543';x.beginPath();x.roundRect(px,py,pw,ph,16);x.fill();
  x.fillStyle='#0a1a24';x.beginPath();x.roundRect(px+14,py+16,pw-28,64,9);x.fill();
- x.direction='ltr';x.textAlign='right';x.fillStyle='#9bf0c7';x.font='bold 27px Tahoma';
- const calcText=calcDisplay||'0';
- x.fillText(String(calcText).slice(-18),px+pw-26,py+59);
- const keys=[['7','8','9','÷'],['4','5','6','×'],['1','2','3','−'],['C','0','=','+']];
- const kw=63,kh=55,gap=8;
- keys.forEach((row,ri)=>row.forEach((k,ci)=>{
-  const bx=px+15+ci*(kw+gap),by=py+98+ri*(kh+gap);
-  x.fillStyle=['÷','×','−','+','='].includes(k)?'#236653':k==='C'?'#8c463f':'#294858';
-  x.beginPath();x.roundRect(bx,by,kw,kh,9);x.fill();
-  x.fillStyle='#f4fbf8';x.font='bold 22px Arial';x.textAlign='center';x.fillText(k,bx+kw/2,by+35);
- }));
- x.direction='rtl';x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 20px Tahoma';x.fillText('مبلغ کل',c.width-30,c.height-68);
- x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 26px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-260,c.height-68);
+ x.direction='ltr';x.textAlign='right';x.fillStyle='#9bf0c7';x.font='bold 27px Tahoma';x.fillText(String(calcDisplay||'0').slice(-18),px+pw-26,py+59);
+ const keys=[['7','8','9','÷'],['4','5','6','×'],['1','2','3','−'],['C','0','=','+']],kw=63,kh=51,gap=8;
+ keys.forEach((row,ri)=>row.forEach((k,ci)=>{const bx=px+15+ci*(kw+gap),by=py+94+ri*(kh+gap);x.fillStyle=['÷','×','−','+','='].includes(k)?'#236653':k==='C'?'#8c463f':'#294858';x.beginPath();x.roundRect(bx,by,kw,kh,9);x.fill();x.fillStyle='#f4fbf8';x.font='bold 22px Arial';x.textAlign='center';x.fillText(k,bx+kw/2,by+33);}));
+ x.direction='rtl';x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 18px Tahoma';x.fillText('مبلغ کل',c.width-30,c.height-67);
+ x.direction='ltr';x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 25px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-260,c.height-67);
  x.fillStyle='#183c3c';x.fillRect(c.width-360,c.height-48,330,28);
- x.fillStyle='#9ac8b5';x.font='14px Tahoma';x.textAlign='right';x.fillText(phase==='payment'&&payment==='cash'?'نقد دریافتی: '+(cashInput||'۰'):phase==='manual'?'قیمت دستی: '+(manualDigits||'۰'):'ماشین حساب صندوق',c.width-38,c.height-28);
+ x.direction='rtl';x.textAlign='right';x.fillStyle='#9ac8b5';x.font='14px Tahoma';x.fillText(phase==='payment'&&payment==='cash'?'نقد دریافتی: '+(cashInput||'۰'):phase==='manual'?'قیمت دستی: '+(manualDigits||'۰'):phase==='payment'&&payment==='card'?'وضعیت کارت: '+(cardStage==='pin'?'ورود رمز':cardStage==='swipe'?'کشیدن کارت':'دریافت کارت'):'ماشین حساب صندوق',c.width-38,c.height-28);
  monitorTexture.needsUpdate=true;
 }
 function buildMonitor(){
@@ -142,7 +143,7 @@ function buildMonitor(){
  monitorTexture=new THREE.CanvasTexture(monitorCanvas);monitorTexture.colorSpace=THREE.SRGBColorSpace;
  const frame=cube(scene,1.75,1.12,.16,0x111b22,-1.05,1.55,.22,.28);
  const bezel=cube(scene,1.66,1.03,.025,0x344650,-1.05,1.56,.315,.25);
- const screen=mesh(scene,new THREE.PlaneGeometry(1.48,.85),new THREE.MeshBasicMaterial({map:monitorTexture}),-1.05,1.56,.155);
+ const screen=mesh(scene,new THREE.PlaneGeometry(1.48,.85),new THREE.MeshBasicMaterial({map:monitorTexture, toneMapped:false}),-1.05,1.56,.337);
  cube(scene,.13,.32,.16,0x293c45,-1.05,1.0,.27);
  const neck=cube(scene,.42,.08,.28,0x56666a,-1.05,1.01,.35,.3);
  const base=cube(scene,.82,.055,.45,0x26343a,-1.05,.83,.42,.25);
