@@ -33,6 +33,7 @@
             <div class="stat"><small id="levelLabel">فروشگاه</small><b id="level">سطح ۱</b></div>
           </div>
           <button id="langBtn" class="icon-btn" title="Change language">FA / EN</button>
+          <button id="settingsBtn" class="icon-btn" title="Graphics settings">⚙</button>
           <button id="pauseBtn" class="icon-btn" title="Pause">Ⅱ</button>
         </header>
 
@@ -41,12 +42,18 @@
           <div class="metric"><span id="incomeLabel">درآمد امروز</span><b id="income">$0</b></div>
           <div class="metric"><span id="stockLabel">موجودی انبار</span><b id="stock">۲۴</b></div>
           <div class="metric"><span id="emptyLabel">قفسه‌های خالی</span><b id="empty">۰</b></div>
+          <div class="goal-card"><div class="goal-head"><span id="goalLabel">هدف مرحله</span><b id="goalValue">0/8</b></div><div class="goal-track"><i id="goalFill"></i></div><div class="goal-head reputation"><span id="reputationLabel">اعتبار</span><b id="reputationValue">72%</b></div></div>
           <div class="panel-actions">
             <button id="restockBtn" class="action-btn"><span>📦 شارژ قفسه‌ها</span><small>۱۰۰$</small></button>
             <button id="upgradeBtn" class="action-btn"><span>⬆️ ارتقای فروشگاه</span><small>۵۰۰$</small></button>
             <button id="hireBtn" class="action-btn"><span>👷 استخدام کارمند</span><small>۳۰۰$</small></button>
             <button id="saveBtn" class="action-btn secondary">💾 ذخیره بازی</button>
           </div>
+          <section id="graphicsSettings" class="graphics-settings hidden">
+            <b id="settingsTitle">تنظیمات گرافیک</b>
+            <label for="qualitySelect" id="qualityLabel">کیفیت گرافیک</label>
+            <select id="qualitySelect"><option value="low">سبک</option><option value="medium">متعادل</option><option value="high">فوق‌العاده</option></select>
+          </section>
           <p id="hint" class="hint">حرکت: WASD یا کلیدهای جهت‌دار<br>چرخش دوربین: حرکت ماوس</p>
         </aside>
 
