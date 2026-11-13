@@ -55,7 +55,7 @@ function drawMonitor(){
  x.fillStyle='#1b3543';x.beginPath();x.roundRect(px,py,pw,ph,16);x.fill();
  x.fillStyle='#0a1a24';x.beginPath();x.roundRect(px+14,py+16,pw-28,64,9);x.fill();
  x.direction='ltr';x.textAlign='right';x.fillStyle='#9bf0c7';x.font='bold 27px Tahoma';
- const calcText=phase==='payment'&&payment==='cash'?(cashInput||'0'):phase==='manual'?(manualDigits||'0'):(calcDisplay||'0');
+ const calcText=calcDisplay||'0';
  x.fillText(String(calcText).slice(-18),px+pw-26,py+59);
  const keys=[['7','8','9','÷'],['4','5','6','×'],['1','2','3','−'],['C','0','=','+']];
  const kw=63,kh=55,gap=8;
@@ -68,7 +68,7 @@ function drawMonitor(){
  x.direction='rtl';x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 20px Tahoma';x.fillText('مبلغ کل',c.width-30,c.height-68);
  x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 26px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-260,c.height-68);
  x.fillStyle='#183c3c';x.fillRect(c.width-360,c.height-48,330,28);
- x.fillStyle='#9ac8b5';x.font='14px Tahoma';x.textAlign='right';x.fillText(phase==='payment'&&payment==='cash'?'مبلغ دریافتی را وارد کن':'ماشین حساب صندوق',c.width-38,c.height-28);
+ x.fillStyle='#9ac8b5';x.font='14px Tahoma';x.textAlign='right';x.fillText(phase==='payment'&&payment==='cash'?'نقد دریافتی: '+(cashInput||'۰'):phase==='manual'?'قیمت دستی: '+(manualDigits||'۰'):'ماشین حساب صندوق',c.width-38,c.height-28);
  monitorTexture.needsUpdate=true;
 }
 function buildMonitor(){
