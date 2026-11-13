@@ -18,7 +18,7 @@ const catalog = [
 ];
 
 let scene,camera,renderer,clock,monitorTexture,monitorCanvas,monitorCtx;
-let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[];
+let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[],beltRollers=[];
 let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
 let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
@@ -134,9 +134,9 @@ function drawMonitor(){
 function buildMonitor(){
  monitorCanvas=document.createElement('canvas');monitorCanvas.width=900;monitorCanvas.height=520;monitorCtx=monitorCanvas.getContext('2d');
  monitorTexture=new THREE.CanvasTexture(monitorCanvas);monitorTexture.colorSpace=THREE.SRGBColorSpace;
- const frame=cube(scene,1.65,1.02,.12,0x18252d,-1.05,1.55,.22,.35);
+ const frame=cube(scene,1.75,1.12,.16,0x111b22,-1.05,1.55,.22,.28);\n const bezel=cube(scene,1.66,1.03,.025,0x344650,-1.05,1.56,.315,.25);
  const screen=mesh(scene,new THREE.PlaneGeometry(1.48,.85),new THREE.MeshBasicMaterial({map:monitorTexture}),-1.05,1.56,.155);
- cube(scene,.13,.32,.16,0x293c45,-1.05,1.0,.27);
+ cube(scene,.13,.32,.16,0x293c45,-1.05,1.0,.27);\n const neck=cube(scene,.42,.08,.28,0x56666a,-1.05,1.01,.35,.3);\n const base=cube(scene,.82,.055,.45,0x26343a,-1.05,.83,.42,.25);
  cube(scene,1.1,.07,.52,0x253941,-1.05,.82,.4);
  for(let r=0;r<3;r++)for(let col=0;col<9;col++)cube(scene,.075,.018,.055,0x71858b,-1.45+col*.1,.87+r*.01,.25+r*.07,.5);
  drawMonitor();
@@ -264,7 +264,7 @@ function buildStore(){
  // conveyor and rubber belt
  cube(scene,2.65,.16,1.35,0x252e32,.85,1.07,-.75,.4);
  cube(scene,2.48,.025,1.19,0x505b5d,.85,1.17,-.75,.65);
- for(let x=-.32;x<=2.02;x+=.22){const roller=mesh(scene,new THREE.CylinderGeometry(.035,.035,1.17,12),material(0x98a5a4,.32,.45),x,1.16,-.75);roller.rotation.x=Math.PI/2;}
+ beltRollers=[];for(let x=-.32;x<=2.02;x+=.22){const roller=mesh(scene,new THREE.CylinderGeometry(.035,.035,1.17,16),material(0x98a5a4,.32,.45),x,1.16,-.75);roller.rotation.x=Math.PI/2;beltRollers.push(roller);}
  // scanner base and terminal
  cube(scene,.52,.14,.52,0x202b32,2.05,1.1,.15,.3);
  cube(scene,.32,.025,.34,0x6bf0c1,2.05,1.19,.15,.22);
