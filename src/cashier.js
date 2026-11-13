@@ -163,16 +163,21 @@ function buildHands(){
  const skin=material(0xc78f70,.82),sleeve=material(0x263e55,.88);
  handLeft=new THREE.Group();handRight=new THREE.Group();
  capsule(handLeft,.105,.38,0x263e55,0,-.2,0);
- sphere(handLeft,.12,0xc78f70,0,-.43,-.02);\n for(let f=0;f<4;f++){const finger=capsule(handLeft,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}\n const leftThumb=capsule(handLeft,.03,.09,0xc78f70,-.13,-.43,.02);leftThumb.rotation.z=-.7;
+ sphere(handLeft,.12,0xc78f70,0,-.43,-.02);
+ for(let f=0;f<4;f++){const finger=capsule(handLeft,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}
+ const leftThumb=capsule(handLeft,.03,.09,0xc78f70,-.13,-.43,.02);leftThumb.rotation.z=-.7;
  handLeft.position.set(-.48,-.48,-.9);camera.add(handLeft);
  capsule(handRight,.105,.38,0x263e55,0,-.2,0);
- sphere(handRight,.12,0xc78f70,0,-.43,-.02);\n for(let f=0;f<4;f++){const finger=capsule(handRight,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}\n const rightThumb=capsule(handRight,.03,.09,0xc78f70,-.13,-.43,.02);rightThumb.rotation.z=-.7;
+ sphere(handRight,.12,0xc78f70,0,-.43,-.02);
+ for(let f=0;f<4;f++){const finger=capsule(handRight,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}
+ const rightThumb=capsule(handRight,.03,.09,0xc78f70,-.13,-.43,.02);rightThumb.rotation.z=-.7;
  handRight.position.set(.48,-.48,-.9);camera.add(handRight);
  handScanner=new THREE.Group();
  cube(handScanner,.12,.2,.35,0x202d35,0,0,0,.3);
  cube(handScanner,.1,.12,.1,0x2d414b,0,-.13,.08,.3);
  const glass=mesh(handScanner,new THREE.BoxGeometry(.09,.015,.09),new THREE.MeshBasicMaterial({color:0x5fffc6,emissive:0x27bd8b}),0,.105,-.1);
- handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);handScanner.visible=false;camera.add(handScanner);\n const laser=new THREE.Mesh(new THREE.PlaneGeometry(.28,.012),new THREE.MeshBasicMaterial({color:0x5dffc7,transparent:true,opacity:.9,side:THREE.DoubleSide}));laser.position.set(0,.12,-.28);laser.visible=false;handScanner.add(laser);handLaser=laser;
+ handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);handScanner.visible=false;camera.add(handScanner);
+ const laser=new THREE.Mesh(new THREE.PlaneGeometry(.28,.012),new THREE.MeshBasicMaterial({color:0x5dffc7,transparent:true,opacity:.9,side:THREE.DoubleSide}));laser.position.set(0,.12,-.28);laser.visible=false;handScanner.add(laser);handLaser=laser;
 }
 function makeCustomer(){
  if(customer)scene.remove(customer);
