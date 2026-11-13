@@ -259,7 +259,7 @@ function animate(){
 }
 function resize(){if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
 function start(){
- buildStore();clock=new THREE.Clock();setupKeyboard();$('drawerCash').textContent=money(drawerBalance);$('inputDisplay').textContent='منتظر دریافت مبلغ';
- $('startScreen').classList.add('hidden');$('game').classList.remove('hidden');newOrder();animate();addEventListener('resize',resize);
+ buildStore();clock=new THREE.Clock();$('world').style.display='none';setupKeyboard();$('drawerCash').textContent=money(drawerBalance);$('inputDisplay').textContent='منتظر دریافت مبلغ';
+ $('startScreen').classList.add('hidden');$('game').classList.remove('hidden');newOrder();addEventListener('resize',resize);
 }
 start();
