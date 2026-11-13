@@ -52,7 +52,7 @@ function shelf(x,z,i){
   const stripe=new THREE.Mesh(new THREE.BoxGeometry(.19,.045,.012),new THREE.MeshStandardMaterial({color:0xf5ead2,roughness:.7}));
   stripe.position.set(x,y-.035,.137);g.add(stripe);
  }
- const tag=spriteLabel('
+  const tag=spriteLabel('$'+pr[1]);tag.position.set(.68,.58+row*.67,.43);tag.scale.set(.68,.27,1);g.add(tag);
  const sign=spriteLabel('AISLE '+(i+1));sign.position.set(0,2.2,0);g.add(sign);
  g.userData={empty:false,productIndex:(i*2)%products.length};scene.add(g);shelves.push(g);
 }
