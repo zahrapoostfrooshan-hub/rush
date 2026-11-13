@@ -213,7 +213,7 @@ function newOrder(){
  $('paymentHint').textContent='روش پرداخت در پایان خرید مشخص می‌شود.';
 }
 function takeScanner(){
- if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;phase='scan';
+ if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;handRight.visible=true;phase='scan';
  setPrompt('۲. کالا را اسکن کن','بارکدخوان در دست توست. برای اسکن هر کالا کلید F را بزن.');notify('بارکدخوان برداشته شد.');updateHud();
 }
 function scan(){
