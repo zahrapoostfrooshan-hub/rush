@@ -1,69 +1,12 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101827" />
-    <title>Shop Rush 2 | Erfan Edition</title>
-  </head>
-  <body>
-    <div id="app">
-      <section id="intro" class="intro" aria-label="صفحه ورود">
-        <div class="intro-grid"></div>
-        <div class="intro-orbit orbit-one"></div><div class="intro-orbit orbit-two"></div>
-        <div class="intro-content">
-          <div class="intro-mark">S<span>2</span></div>
-          <p class="intro-kicker">A NEW STORE. A NEW STORY.</p>
-          <h1 class="intro-title">SHOP RUSH <span>2</span></h1>
-          <div class="intro-line"></div>
-          <p class="intro-name">نسخه اختصاصی <strong>عرفان</strong></p>
-          <p class="intro-loading">در حال آماده‌سازی فروشگاه<span class="dots">...</span></p>
-          <div class="intro-progress"><i></i></div>
-        </div>
-        <div class="intro-corner">ERFAN EDITION <span>•</span> 2026</div>
-      </section>
-
-      <main id="game" class="game hidden">
-        <canvas id="world"></canvas>
-        <header class="topbar">
-          <div class="brand"><span class="brand-icon">S2</span><div><b>SHOP RUSH 2</b><small>ERFAN EDITION</small></div></div>
-          <div class="stats">
-            <div class="stat"><small id="moneyLabel">موجودی</small><b id="money">۱٬۰۰۰ $</b></div>
-            <div class="stat"><small id="customersLabel">مشتری‌ها</small><b id="customers">۰</b></div>
-            <div class="stat"><small id="levelLabel">فروشگاه</small><b id="level">سطح ۱</b></div>
-          </div>
-          <button id="langBtn" class="icon-btn" title="Change language">FA / EN</button>
-          <button id="settingsBtn" class="icon-btn" title="Graphics settings">⚙</button>
-          <button id="pauseBtn" class="icon-btn" title="Pause">Ⅱ</button>
-        </header>
-
-        <aside class="side-panel">
-          <div class="panel-heading"><span class="live-dot"></span><div><b id="panelTitle">مدیریت فروشگاه</b><small id="panelSubtitle">داشبورد زنده</small></div></div>
-          <div class="metric"><span id="incomeLabel">درآمد امروز</span><b id="income">$0</b></div>
-          <div class="metric"><span id="stockLabel">موجودی انبار</span><b id="stock">۲۴</b></div>
-          <div class="metric"><span id="emptyLabel">قفسه‌های خالی</span><b id="empty">۰</b></div>
-          <div class="goal-card"><div class="goal-head"><span id="goalLabel">هدف مرحله</span><b id="goalValue">0/8</b></div><div class="goal-track"><i id="goalFill"></i></div><div class="goal-head reputation"><span id="reputationLabel">اعتبار</span><b id="reputationValue">72%</b></div></div>
-          <div class="panel-actions">
-            <button id="restockBtn" class="action-btn"><span>📦 شارژ قفسه‌ها</span><small>۱۰۰$</small></button>
-            <button id="upgradeBtn" class="action-btn"><span>⬆️ ارتقای فروشگاه</span><small>۵۰۰$</small></button>
-            <button id="hireBtn" class="action-btn"><span>👷 استخدام کارمند</span><small>۳۰۰$</small></button>
-            <button id="saveBtn" class="action-btn secondary">💾 ذخیره بازی</button>
-          </div>
-          <section id="graphicsSettings" class="graphics-settings hidden">
-            <b id="settingsTitle">تنظیمات گرافیک</b>
-            <label for="qualitySelect" id="qualityLabel">کیفیت گرافیک</label>
-            <select id="qualitySelect"><option value="low">سبک</option><option value="medium">متعادل</option><option value="high">فوق‌العاده</option></select>
-          </section>
-          <p id="hint" class="hint">حرکت: WASD یا کلیدهای جهت‌دار<br>چرخش دوربین: حرکت ماوس</p>
-        </aside>
-
-        <div id="bottomTip" class="bottom-tip">به فروشگاه خوش آمدی، عرفان! برای حرکت از WASD استفاده کن.</div>
-        <div id="toast" class="toast" role="status"></div>
-        <div id="pause" class="pause hidden">
-          <div class="pause-card"><div class="brand-icon big">S2</div><h2 id="pauseTitle">بازی متوقف شد</h2><p id="pauseText">فروشگاه منتظر مدیریت توست.</p><button id="resumeBtn" class="primary-btn">ادامه بازی</button></div>
-        </div>
-      </main>
-    </div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
-</html>
+<html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#101827"><title>Shop Rush 2 | Erfan Edition</title></head>
+<body><div id="app">
+<section id="intro" class="intro"><div class="intro-grid"></div><div class="intro-content"><div class="intro-mark">S<span>2</span></div><p class="intro-kicker">FIRST PERSON CASHIER SIMULATOR</p><h1 class="intro-title">SHOP RUSH <span>2</span></h1><div class="intro-line"></div><p class="intro-name">نسخه اختصاصی <strong>عرفان</strong></p><p class="intro-loading">در حال آماده‌سازی صندوق...</p><div class="intro-progress"><i></i></div></div><div class="intro-corner">ERFAN EDITION • 2026</div></section>
+<main id="game" class="game hidden"><canvas id="world"></canvas>
+<header class="topbar"><div class="brand"><span class="brand-icon">S2</span><div><b>SHOP RUSH 2</b><small>ERFAN CASHIER EDITION</small></div></div><div class="stats"><div class="stat"><small>مشتری فعلی</small><b id="customerLabel">مشتری شماره ۱</b></div><div class="stat"><small>اعتبار</small><b id="score">۱۰۰٪</b></div><div class="stat"><small>پول صندوق</small><b id="drawerBalance">۵۰۰٬۰۰۰ تومان</b></div></div><button id="helpBtn" class="icon-btn">راهنما ؟</button></header>
+<aside class="pos-window"><div class="pos-title"><span class="live-dot"></span><div><b>سیستم فروش (POS)</b><small>ERFAN MARKET • CHECKOUT 01</small></div></div><div class="pos-meta"><span>وضعیت اسکنر</span><b id="scanStatus" class="status good">آماده اسکن</b></div><div class="pos-meta"><span>تلاش اسکن ناموفق</span><b id="scannerAttempts">۰</b></div><div class="current-item"><small>محصول روی نوار</small><b id="currentProduct">...</b></div><div class="pos-list"><div class="pos-list-head"><span>محصول</span><span>قیمت</span></div><div id="posItems"><div class="pos-empty">هنوز کالایی اسکن نشده</div></div></div><div class="pos-total"><span>مبلغ کل</span><b id="posTotal">۰ تومان</b></div><div class="pos-meta"><span>کالاهای باقی‌مانده</span><b id="itemsLeft">۰</b></div>
+<div id="manualPanel" class="manual-panel hidden"><b>ورود دستی قیمت</b><p>قیمت روی برچسب محصول را بخوان و وارد کن.</p><input id="manualPrice" type="number" placeholder="قیمت به تومان"><button id="manualSubmit" class="primary-btn">ثبت قیمت</button></div>
+<div class="scan-controls"><button id="scanBtn" class="primary-btn">▦ اسکن محصول <small>(E)</small></button></div>
+<div id="paymentPanel" class="payment-panel hidden"><b>دریافت وجه</b><div class="pos-meta"><span>روش پرداخت</span><b id="paymentType">نقدی</b></div><div class="pos-meta"><span>مبلغ قابل پرداخت</span><b id="paymentAmount">۰</b></div><div id="cashPanel" class="hidden"><label for="cashReceived">مبلغ نقدی دریافتی</label><input id="cashReceived" type="number" placeholder="مثلاً ۱۰۰۰۰۰"><button id="cashPayBtn" class="primary-btn">ثبت پول دریافتی</button></div><button id="cardPayBtn" class="primary-btn hidden">کشیدن کارت و دریافت وجه</button></div>
+<div id="changePanel" class="change-panel hidden"><b>پس دادن باقی پول</b><div class="pos-meta"><span>باقی پول مشتری</span><b id="changeDue">۰</b></div><div class="pos-meta"><span>تحویل داده‌ای</span><b id="changeGiven">۰</b></div><div class="pos-meta"><span>باقی‌مانده</span><b id="changeRemaining">۰</b></div><p>اسکناس‌ها را از کشوی صندوق انتخاب کن:</p><div id="changeButtons" class="change-buttons"></div></div><button id="finishBtn" class="primary-btn hidden">مشتری بعدی ←</button></aside>
+<div class="cashier-hint">فقط پشت صندوق هستی • اسکن با E یا دکمه اسکن • قیمت هر کالا روی برچسب بالای آن نوشته شده</div><div id="toast" class="toast"></div></main></div><script type="module" src="/src/main.js"></script></body></html>
