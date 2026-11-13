@@ -18,7 +18,8 @@ const catalog = [
 ];
 
 let scene,camera,renderer,clock,monitorTexture,monitorCanvas,monitorCtx;
-let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[],beltRollers=[];
+let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[],beltRollers=[],cashDrawer,cardProp,cashProp;
+let actionBusy=false,cardStage='idle',pinDigits='';
 let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
 let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
@@ -98,6 +99,11 @@ function roundedLabel(text,color='#102b35'){
 }
 function setPrompt(title,text){promptTitle=title;promptText=text;$('guideTitle').textContent=title;$('guideText').textContent=text;let k='E';if(title.includes('اسکن'))k='F';if(title.includes('کارت'))k='C';if(title.includes('نقد'))k='0-9';if(title.includes('دستی'))k='0-9 + Enter';if(title.includes('باقی پول'))k='1 تا 7';if(title.includes('تکمیل'))k='Space';$('guideKey').textContent=k;}
 function notify(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2100);}
+function easeInOut(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function tweenObject(obj,target,duration=420){return new Promise(resolve=>{const start=performance.now(),from={x:obj.position.x,y:obj.position.y,z:obj.position.z,rx:obj.rotation.x,ry:obj.rotation.y,rz:obj.rotation.z},to={x:target.x??from.x,y:target.y??from.y,z:target.z??from.z,rx:target.rx??from.rx,ry:target.ry??from.ry,rz:target.rz??from.rz};const tick=now=>{const t=Math.min(1,(now-start)/duration),e=easeInOut(t);obj.position.set(from.x+(to.x-from.x)*e,from.y+(to.y-from.y)*e,from.z+(to.z-from.z)*e);obj.rotation.set(from.rx+(to.rx-from.rx)*e,from.ry+(to.ry-from.ry)*e,from.rz+(to.rz-from.rz)*e);if(t<1)requestAnimationFrame(tick);else resolve();};requestAnimationFrame(tick);});}
+function makeCard(){const g=new THREE.Group();cube(g,.34,.012,.22,0xe7e5d8,0,0,0,.3);cube(g,.075,.008,.055,0xb5a46b,-.105,.01,-.055,.4);for(let i=0;i<4;i++)cube(g,.012,.003,.11,0x263d4c,.055+i*.025,.009,.025,.4);return g;}
+function makeCashBundle(){const g=new THREE.Group();for(let i=0;i<4;i++){const b=cube(g,.28,.012,.13,[0x77a884,0x9abd91][i%2],0,i*.014,0,.8);b.rotation.y=(i-1.5)*.025;}cube(g,.035,.055,.14,0xe7d8a1,.02,.035,0,.8);return g;}
+async function reachHand(hand){const rest={x:hand.position.x,y:hand.position.y,z:hand.position.z,rx:hand.rotation.x,ry:hand.rotation.y,rz:hand.rotation.z};await tweenObject(hand,{x:.22,y:-.25,z:-.58,rx:-.55,ry:.12,rz:.22},260);await tweenObject(hand,rest,260);}
 function drawMonitor(){
  if(!monitorCtx)return;
  const c=monitorCanvas,x=monitorCtx;x.clearRect(0,0,c.width,c.height);
@@ -165,7 +171,7 @@ function buildHands(){
  cube(handScanner,.12,.2,.35,0x202d35,0,0,0,.3);
  cube(handScanner,.1,.12,.1,0x2d414b,0,-.13,.08,.3);
  const glass=mesh(handScanner,new THREE.BoxGeometry(.09,.015,.09),new THREE.MeshBasicMaterial({color:0x5fffc6,emissive:0x27bd8b}),0,.105,-.1);
- handScanner.position.set(.48,-.42,-.82);handScanner.visible=false;camera.add(handScanner);
+ handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);handScanner.visible=false;camera.add(handScanner);
 }
 function makeCustomer(){
  if(customer)scene.remove(customer);
@@ -276,8 +282,9 @@ function buildStore(){
  cube(scene,.45,.28,.06,0x152a34,2.0,1.27,-.22,.3);
  const cardScreen=mesh(scene,new THREE.PlaneGeometry(.35,.19),new THREE.MeshBasicMaterial({color:0x5fe0ae}),2,1.28,-.184);
  // cash drawer and note slots
- cube(scene,1.25,.16,.75,0x202b31,-1.9,.96,.85,.35);
- for(let i=0;i<5;i++)cube(scene,.21,.045,.52,0x506067,-2.32+i*.21,1.06,.84,.6);
+ cashDrawer=new THREE.Group();cashDrawer.position.set(-1.9,.96,.85);scene.add(cashDrawer);
+ cube(cashDrawer,1.25,.16,.75,0x202b31,0,0,0,.35);cube(cashDrawer,1.18,.045,.68,0x111b20,0,.095,0,.45);
+ for(let i=0;i<5;i++){const bill=cube(cashDrawer,.19,.012,.46,[0x6a9b78,0x8caa83,0x547c68][i%3],-.43+i*.215,.125,0,.85);bill.rotation.y=(i%2)*.035;}
  addCounterDetails();buildMonitor();buildScanner();buildHands();makeCustomer();
 }
 function createProduct(p,i){
@@ -327,7 +334,7 @@ function updateHud(){
  drawMonitor();
 }
 function newOrder(){
- order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;if(handScanner)handScanner.visible=false;if(handLeft)handLeft.visible=true;
+ order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;if(handScanner){handScanner.visible=false;handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);}if(handLeft)handLeft.visible=true;if(handRight)handRight.visible=true;actionBusy=false;cardStage='idle';pinDigits='';if(cashDrawer)cashDrawer.position.z=.85;
  const count=3+Math.floor(Math.random()*3);for(let i=0;i<count;i++)order.push(catalog[Math.floor(Math.random()*catalog.length)]);
  payment=Math.random()<.5?'cash':'card';cashOffer=0;
  if(payment==='cash'){const orderTotal=order.reduce((sum,p)=>sum+p.price,0);const extra=[0,20000,50000,100000,150000][Math.floor(Math.random()*5)];cashOffer=Math.ceil((orderTotal+extra)/10000)*10000;}
@@ -335,9 +342,10 @@ function newOrder(){
  phase='pickup';setPrompt('۱. بارکدخوان را بردار','برای برداشتن بارکدخوان کلید E را فشار بده.');updateHud();
  $('paymentHint').textContent='روش پرداخت در پایان خرید مشخص می‌شود.';
 }
-function takeScanner(){
- if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;handRight.visible=true;phase='scan';
- setPrompt('۲. کالا را اسکن کن','بارکدخوان در دست توست. برای اسکن هر کالا کلید F را بزن.');notify('بارکدخوان برداشته شد.');updateHud();
+async function takeScanner(){
+ if(phase!=='pickup'||actionBusy)return;actionBusy=true;handRight.visible=true;handScanner.visible=true;handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);
+ await tweenObject(handScanner,{x:.48,y:-.42,z:-.82,rx:-.15,ry:0,rz:0},520);await tweenObject(handRight,{x:.42,y:-.42,z:-.86,rx:-.2,ry:0,rz:-.12},360);
+ scannerTaken=true;phase='scan';actionBusy=false;setPrompt('۲. کالا را اسکن کن','بارکدخوان برداشته شد. با F آن را به سمت هر کالا بگیر و اسکن کن.');notify('بارکدخوان برداشته شد.');updateHud();
 }
 function scan(){
  if(phase!=='scan')return;
@@ -352,32 +360,46 @@ function scan(){
  if(Math.random()<.16){scannerFault=true;failedScans=1;$('attempts').textContent='۱';setPrompt(Math.random()<.5?'شارژ بارکدخوان کم است':'اتصال بارکدخوان قطع شده','تلاش ناموفق ۱ از ۳. دوباره F را بزن؛ بعد از سه تلاش ورود دستی فعال می‌شود.');notify('بارکدخوان این بار اسکن نکرد.');return;}
  registerProduct('scan');
 }
-function registerProduct(mode){
- const p=order[itemIndex];scanned.push(p);total+=p.price;itemIndex++;scannerFault=false;failedScans=0;manualDigits='';$('attempts').textContent='۰';
- scannerBeam.visible=true;setTimeout(()=>{if(scannerBeam)scannerBeam.visible=false;},180);
+async function registerProduct(mode){
+ if(actionBusy)return;actionBusy=true;const p=order[itemIndex],target=productsOnBelt[itemIndex];
+ if(mode==='scan'&&handScanner){await tweenObject(handScanner,{x:.18,y:-.25,z:-.68,rx:-.8,ry:-.28,rz:-.12},220);scannerBeam.visible=true;if(target){target.scale.setScalar(1.08);await tweenObject(handScanner,{x:.48,y:-.42,z:-.82,rx:-.15,ry:0,rz:0},260);target.scale.setScalar(1);}else await tweenObject(handScanner,{x:.48,y:-.42,z:-.82},260);scannerBeam.visible=false;}
+ scanned.push(p);total+=p.price;itemIndex++;scannerFault=false;failedScans=0;manualDigits='';$('attempts').textContent='۰';
  if(mode==='manual')notify('قیمت دستی ثبت شد.');else notify('بیپ! کالا اسکن شد.');
- if(itemIndex<order.length){setPrompt('ادامه اسکن کالاها','محصول بعدی را اسکن کن. کلید F');}
- else startPayment();
- updateHud();
+ actionBusy=false;if(itemIndex<order.length){setPrompt('ادامه اسکن کالاها','بارکدخوان را به سمت محصول بعدی بگیر و F را بزن.');}else startPayment();updateHud();
 }
 function startPayment(){
  phase='payment';scannerBeam.visible=false;
- if(payment==='card'){setPrompt('۴. دریافت کارت','مشتری کارت داده است. کارت را روی کارت‌خوان بکش: کلید C');$('paymentHint').textContent='پرداخت با کارت';}
+ if(payment==='card'){cardStage='take';pinDigits='';cardProp=makeCard();cardProp.position.set(.34,1.18,-2.35);scene.add(cardProp);setPrompt('۴. دریافت کارت','مشتری کارت را جلو می‌آورد. کلید C را بزن تا کارت را بگیری.');$('paymentHint').textContent='پرداخت با کارت';}
  else{setPrompt('۴. دریافت پول نقد','مشتری '+money(cashOffer)+' داده است. مبلغ را با اعداد کیبورد وارد کن و Enter بزن.');$('paymentHint').textContent='پرداخت نقدی • مبلغ مشتری: '+money(cashOffer);cashInput='';}
- updateHud();
+ updateHud();drawMonitor();
 }
-function swipeCard(){if(phase!=='payment'||payment!=='card')return;phase='done';setPrompt('پرداخت موفق','پرداخت کارت انجام شد. برای مشتری بعدی Space را بزن.');notify('پرداخت کارت با موفقیت انجام شد.');updateHud();}
-function receiveCash(){if(phase!=='payment'||payment!=='cash')return;const val=Number(cashInput);if(!Number.isFinite(val)||val!==cashOffer){notify('مبلغ واردشده با پولی که مشتری داده مطابقت ندارد. دوباره وارد کن.');cashInput='';return;}drawerBalance+=cashOffer;changeDue=cashOffer-total;changePaid=0;if(changeDue===0){phase='done';setPrompt('پرداخت دقیق انجام شد','نیازی به باقی پول نیست. برای مشتری بعدی Space را بزن.');}else{phase='change';setPrompt('۵. باقی پول را پس بده','مبلغ باقی‌مانده '+money(changeDue)+' است. کلید اسکناس مناسب را انتخاب کن: 1 تا 7');}updateHud();}
+async function swipeCard(){
+ if(phase!=='payment'||payment!=='card'||actionBusy)return;actionBusy=true;
+ if(cardStage==='take'){const rest={x:handRight.position.x,y:handRight.position.y,z:handRight.position.z,rx:handRight.rotation.x,ry:handRight.rotation.y,rz:handRight.rotation.z};await tweenObject(handRight,{x:.22,y:-.25,z:-.58,rx:-.55,ry:.12,rz:.22},260);await tweenObject(cardProp,{x:.42,y:1.34,z:-.82},520);await tweenObject(handRight,rest,260);cardStage='swipe';setPrompt('۵. کشیدن کارت','کارت را روی شیار کارت‌خوان بکش. دوباره C را بزن.');notify('کارت دریافت شد.');}
+ else if(cardStage==='swipe'){await tweenObject(cardProp,{x:1.92,y:1.38,z:-.05},360);await tweenObject(cardProp,{x:1.62,y:1.38,z:-.05},430);await tweenObject(cardProp,{x:1.3,y:1.38,z:-.05},350);scene.remove(cardProp);cardProp=null;cardStage='pin';pinDigits='';setPrompt('۶. واردکردن رمز کارت','رمز آزمایشی ۴ رقمی را با کیبورد وارد کن و Enter بزن.');notify('کارت خوانده شد. رمز کارت را وارد کن.');}
+ actionBusy=false;drawMonitor();updateHud();
+}
+async function receiveCash(){
+ if(phase!=='payment'||payment!=='cash'||actionBusy)return;const val=Number(cashInput);if(!Number.isFinite(val)||val!==cashOffer){notify('مبلغ واردشده با پولی که مشتری داده مطابقت ندارد. دوباره وارد کن.');cashInput='';return;}
+ actionBusy=true;cashProp=makeCashBundle();cashProp.position.set(.35,1.22,-2.35);scene.add(cashProp);await reachHand(handRight);await tweenObject(cashProp,{x:-1.9,y:1.2,z:.85},600);scene.remove(cashProp);cashProp=null;await tweenObject(cashDrawer,{z:1.42},300);drawerBalance+=cashOffer;changeDue=cashOffer-total;changePaid=0;await tweenObject(cashDrawer,{z:.85},260);actionBusy=false;
+ if(changeDue===0){phase='done';setPrompt('پرداخت دقیق انجام شد','نیازی به باقی پول نیست. برای مشتری بعدی Space را بزن.');}else{phase='change';setPrompt('۵. باقی پول را پس بده','مبلغ باقی‌مانده '+money(changeDue)+' است. کلید اسکناس مناسب را انتخاب کن: 1 تا 7');}updateHud();
+}
 const notes=[100000,50000,20000,10000,5000,2000,1000];
-function giveNote(key){if(phase!=='change')return;const note=notes[Number(key)-1];if(!note)return;if(changePaid+note>changeDue){notify('این اسکناس از باقی پول بیشتر است.');return;}if(drawerBalance<note){notify('این اسکناس در کشوی صندوق موجود نیست.');return;}changePaid+=note;drawerBalance-=note;if(changePaid===changeDue){phase='done';setPrompt('۶. خرید تکمیل شد','باقی پول درست تحویل داده شد. برای مشتری بعدی Space را بزن.');notify('باقی پول کامل تحویل داده شد.');}else{setPrompt('ادامه تحویل باقی پول','باقی‌مانده: '+money(changeDue-changePaid)+' • اسکناس بعدی را با کلید 1 تا 7 انتخاب کن.');}updateHud();}
+async function giveNote(key){
+ if(phase!=='change'||actionBusy)return;const note=notes[Number(key)-1];if(!note)return;if(changePaid+note>changeDue){notify('این اسکناس از باقی پول بیشتر است.');return;}if(drawerBalance<note){notify('این اسکناس در کشوی صندوق موجود نیست.');return;}
+ actionBusy=true;await tweenObject(cashDrawer,{z:1.42},240);const bill=makeCashBundle();bill.scale.set(.55,.55,.55);bill.position.set(-1.9,1.2,1.35);scene.add(bill);await reachHand(handLeft);await tweenObject(bill,{x:.35,y:1.2,z:-2.1},520);scene.remove(bill);await tweenObject(cashDrawer,{z:.85},240);changePaid+=note;drawerBalance-=note;actionBusy=false;
+ if(changePaid===changeDue){phase='done';setPrompt('۶. خرید تکمیل شد','باقی پول درست تحویل داده شد. برای مشتری بعدی Space را بزن.');notify('باقی پول کامل تحویل داده شد.');}else{setPrompt('ادامه تحویل باقی پول','باقی‌مانده: '+money(changeDue-changePaid)+' • اسکناس بعدی را با کلید 1 تا 7 انتخاب کن.');}updateHud();
+}
 function nextCustomer(){if(phase!=='done')return;customerNumber++;makeCustomer();newOrder();notify('مشتری بعدی رسید.');}
 function handleNumber(key){
  if(phase==='manual'){if(key==='Backspace'){manualDigits=manualDigits.slice(0,-1);}else if(/^[0-9]$/.test(key)){manualDigits+=key;} $('inputDisplay').textContent=manualDigits||'قیمت را وارد کن';}
  else if(phase==='payment'&&payment==='cash'){if(key==='Backspace'){cashInput=cashInput.slice(0,-1);}else if(/^[0-9]$/.test(key)){cashInput+=key;} $('inputDisplay').textContent=cashInput?Number(cashInput).toLocaleString('fa-IR')+' تومان':'مبلغ نقدی را وارد کن';}
+ else if(phase==='payment'&&payment==='card'&&cardStage==='pin'){if(key==='Backspace'){pinDigits=pinDigits.slice(0,-1);}else if(/^[0-9]$/.test(key)&&pinDigits.length<4){pinDigits+=key;}drawMonitor();$('inputDisplay').textContent='رمز: '+('•'.repeat(pinDigits.length));}
 }
 function enterKey(){
  if(phase==='manual'){const value=Number(manualDigits);if(value===order[itemIndex].price){registerProduct('manual');}else{score=Math.max(0,score-4);notify('قیمت صحیح نیست. برچسب کالا را بررسی کن.');manualDigits='';$('inputDisplay').textContent='قیمت را دوباره وارد کن';$('score').textContent=score.toLocaleString('fa-IR')+'٪';}}
  else if(phase==='payment'&&payment==='cash')receiveCash();
+ else if(phase==='payment'&&payment==='card'&&cardStage==='pin'){if(pinDigits.length===4){cardStage='approved';phase='done';setPrompt('پرداخت موفق','رمز تأیید شد. برای مشتری بعدی Space را بزن.');notify('پرداخت کارت با موفقیت انجام شد.');drawMonitor();updateHud();}else notify('رمز باید ۴ رقم باشد.');}
 }
 function handleCalculatorKey(k){
  if(k==='C'){calcDisplay='0';calcAccumulator=null;calcOperator=null;calcFresh=true;}
