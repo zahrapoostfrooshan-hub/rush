@@ -86,9 +86,9 @@ function selectItem(c,s){const a=c.userData.ai,p=products[s.userData.productInde
 function removeCustomer(c){const a=c.userData.ai;if(a.bought){state.customers++;state.sales++;state.money+=a.spent;state.income+=a.spent;state.reputation=Math.min(100,state.reputation+.4);}else state.reputation=Math.max(10,state.reputation-.5);scene.remove(c);customers.splice(customers.indexOf(c),1);updateUI();if(state.sales>=goal()&&state.level<8)toast(t().goalDone);}
 function updateCustomers(dt){
  for(const c of [...customers]){const a=c.userData.ai;a.patience-=dt;if(a.patience<=0&&a.phase!=='exit'){a.phase='exit';a.target.set(0,0,12);state.reputation=Math.max(10,state.reputation-1);}
- if(!walk(c,dt))continue;a.wait+=dt;if(a.wait<.5)continue;
+ if(!walk(c,dt))continue;a.wait+=dt;if(a.wait<(.5/(1+state.employees*.2)))continue;
  if(a.phase==='enter'){a.phase='browse';a.chosen=nearestShelf(c);if(a.chosen)a.target.set(a.chosen.position.x,0,a.chosen.position.z+1);else{a.phase='exit';a.target.set(0,0,12);}}
- else if(a.phase==='browse'){if(a.chosen&&a.chosen.userData.empty)a.chosen=nearestShelf(c);if(!a.chosen){a.phase='exit';a.target.set(0,0,12);}else{const p=products[a.chosen.userData.productIndex];if(p[0]===a.preferred||Math.random()>.35)selectItem(c,a.chosen);else{const next=shelves.find(s=>s!==a.chosen&&!s.userData.empty);if(next){a.chosen=next;a.target.set(next.position.x,0,next.position.z+1);a.wait=0;}else selectItem(c,a.chosen);}}}
+ else if(a.phase==='browse'){if(a.chosen&&a.chosen.userData.empty){const replacement=nearestShelf(c);if(replacement&&replacement!==a.chosen){a.chosen=replacement;a.target.set(replacement.position.x,0,replacement.position.z+1);a.wait=0;continue;}a.phase='exit';a.target.set(0,0,12);}else if(!a.chosen){a.phase='exit';a.target.set(0,0,12);}else{const p=products[a.chosen.userData.productIndex];if(p[0]===a.preferred||Math.random()>.35)selectItem(c,a.chosen);else{const next=shelves.find(s=>s!==a.chosen&&!s.userData.empty);if(next){a.chosen=next;a.target.set(next.position.x,0,next.position.z+1);a.wait=0;}else selectItem(c,a.chosen);}}}
  else if(a.phase==='queue'){a.phase='pay';a.target.set(-7,0,6.8);a.wait=0;}
  else if(a.phase==='pay'){a.phase='exit';a.target.set(0,0,12);a.wait=0;}
  else if(a.phase==='exit')removeCustomer(c);a.wait=0;
