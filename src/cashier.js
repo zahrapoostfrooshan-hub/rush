@@ -260,7 +260,7 @@ function handleCalculatorKey(k){
  if(k==='C'){calcDisplay='0';calcAccumulator=null;calcOperator=null;calcFresh=true;}
  else if(['+','−','×','÷'].includes(k)){calcAccumulator=Number(calcDisplay)||0;calcOperator=k;calcFresh=true;}
  else if(k==='='){const b=Number(calcDisplay)||0,a=calcAccumulator??b;calcDisplay=String(calcOperator==='+'?a+b:calcOperator==='−'?a-b:calcOperator==='×'?a*b:calcOperator==='÷'?(b?a/b:0):b);calcAccumulator=null;calcOperator=null;calcFresh=true;}
- else if(/^\\d$/.test(k)){calcDisplay=calcFresh||calcDisplay==='0'?k:calcDisplay+k;calcFresh=false;}
+ else if(/^\d$/.test(k)){calcDisplay=calcFresh||calcDisplay==='0'?k:calcDisplay+k;calcFresh=false;}
  drawMonitor();
 }
 function setupKeyboard(){
