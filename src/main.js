@@ -33,7 +33,7 @@ function saveGame(){localStorage.setItem('shopRush2ErfanSave',JSON.stringify(sta
 function loadGame(){try{const d=localStorage.getItem('shopRush2ErfanSave');if(d)Object.assign(state,JSON.parse(d));}catch(e){console.warn(e);}}
 function box(p,w,h,d,c,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(c));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;p.add(m);return m;}
 function spriteLabel(text){
- const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d);x.fillStyle='#193342';x.beginPath();x.roundRect(5,5,246,86,14);x.fill();x.strokeStyle='#f4d58d';x.lineWidth=4;x.stroke();x.fillStyle='#fff4d2';x.font='bold 38px Tahoma';x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,49);
+ const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');x.fillStyle='#193342';x.beginPath();x.roundRect(5,5,246,86,14);x.fill();x.strokeStyle='#f4d58d';x.lineWidth=4;x.stroke();x.fillStyle='#fff4d2';x.font='bold 38px Tahoma';x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,49);
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));s.scale.set(.9,.34,1);return s;
 }
 function shelf(x,z,i){
