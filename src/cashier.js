@@ -24,7 +24,7 @@ let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDig
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
 let promptTitle='',promptText='',toastTimer=0,keysDown={};
 
-function material(color,roughness=.72,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
+function material(color,roughness=.72,metalness=0){return color && color.isMaterial ? color : new THREE.MeshStandardMaterial({color,roughness,metalness});}
 function mesh(parent,geometry,mat,x,y,z){const m=new THREE.Mesh(geometry,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function cube(parent,w,h,d,color,x,y,z,rough=.65){return mesh(parent,new THREE.BoxGeometry(w,h,d),material(color,rough),x,y,z);}
 function sphere(parent,r,color,x,y,z,detail=24){return mesh(parent,new THREE.SphereGeometry(r,detail,detail),material(color),x,y,z);}
@@ -36,7 +36,7 @@ function roundedLabel(text,color='#102b35'){
  x.fillStyle='#fff';x.font='bold 42px Tahoma';x.textAlign='center';x.textBaseline='middle';x.fillText(text,256,65);
  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(1.3,.32,1);return s;
 }
-function setPrompt(title,text){promptTitle=title;promptText=text;$('guideTitle').textContent=title;$('guideText').textContent=text;}
+function setPrompt(title,text){promptTitle=title;promptText=text;$('guideTitle').textContent=title;$('guideText').textContent=text;let k='E';if(title.includes('اسکن'))k='F';if(title.includes('کارت'))k='C';if(title.includes('نقدی'))k='0-9';if(title.includes('دستی'))k='0-9 + Enter';if(title.includes('باقی پول'))k='1 تا 7';if(title.includes('تکمیل'))k='Space';$('guideKey').textContent=k;}
 function notify(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2100);}
 function drawMonitor(){
  if(!monitorCtx)return;
@@ -186,7 +186,7 @@ function updateHud(){
  drawMonitor();
 }
 function newOrder(){
- order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;
+ order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;if(handScanner)handScanner.visible=false;if(handLeft)handLeft.visible=true;
  const count=3+Math.floor(Math.random()*3);for(let i=0;i<count;i++)order.push(catalog[Math.floor(Math.random()*catalog.length)]);
  payment=Math.random()<.5?'cash':'card';cashOffer=0;
  if(payment==='cash'){const extra=[0,20000,50000,100000,150000][Math.floor(Math.random()*5)];cashOffer=Math.ceil((total+extra)/10000)*10000;}
@@ -208,7 +208,7 @@ function scan(){
   else{setPrompt('خطای بارکدخوان','دوباره F را بزن. تلاش '+failedScans.toLocaleString('fa-IR')+' از ۳');notify('اسکن ناموفق بود. دوباره تلاش کن.');}
   return;
  }
- if(Math.random()<.16){scannerFault=true;failedScans=0;$('attempts').textContent='۰';setPrompt(Math.random()<.5?'شارژ بارکدخوان کم است':'اتصال بارکدخوان قطع شده','دوباره F را بزن و تلاش کن. پس از سه تلاش می‌توانی قیمت را دستی وارد کنی.');notify('بارکدخوان این بار اسکن نکرد.');return;}
+ if(Math.random()<.16){scannerFault=true;failedScans=1;$('attempts').textContent='۱';setPrompt(Math.random()<.5?'شارژ بارکدخوان کم است':'اتصال بارکدخوان قطع شده','تلاش ناموفق ۱ از ۳. دوباره F را بزن؛ بعد از سه تلاش ورود دستی فعال می‌شود.');notify('بارکدخوان این بار اسکن نکرد.');return;}
  registerProduct('scan');
 }
 function registerProduct(mode){
