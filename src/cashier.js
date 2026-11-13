@@ -25,6 +25,66 @@ let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalan
 let promptTitle='',promptText='',toastTimer=0,keysDown={},calcDisplay='0',calcAccumulator=null,calcOperator=null,calcFresh=true;
 
 function material(color,roughness=.72,metalness=0){return color && color.isMaterial ? color : new THREE.MeshStandardMaterial({color,roughness,metalness});}
+
+function makePackageTexture(title,base,accent){
+ const cv=document.createElement('canvas');cv.width=512;cv.height=512;const g=cv.getContext('2d');
+ const grad=g.createLinearGradient(0,0,512,512);grad.addColorStop(0,base);grad.addColorStop(1,'#17252d');g.fillStyle=grad;g.fillRect(0,0,512,512);
+ g.fillStyle=accent;g.beginPath();g.moveTo(0,340);g.lineTo(512,245);g.lineTo(512,512);g.lineTo(0,512);g.fill();
+ g.fillStyle='rgba(255,255,255,.14)';g.fillRect(28,26,456,7);
+ g.fillStyle='#fff';g.font='bold 46px Tahoma';g.textAlign='center';g.fillText(title,256,180);
+ g.font='bold 18px Arial';g.fillText('ERFAN MARKET  •  PREMIUM',256,220);
+ g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(256,370,76,0,Math.PI*2);g.fill();
+ g.fillStyle=accent;g.font='bold 34px Tahoma';g.fillText(title.slice(0,8),256,382);
+ g.fillStyle='#fff';g.font='16px Arial';g.fillText('FRESH  •  QUALITY  •  DAILY',256,478);
+ const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;return tex;
+}
+function detailedMaterial(title,color,accent,rough=.38){
+ return new THREE.MeshStandardMaterial({map:makePackageTexture(title,color,accent),roughness:rough,metalness:.02});
+}
+function addFloorDetails(){
+ const grout=material(0x858e8b,.92);
+ for(let x=-11;x<=11;x+=1.5)cube(scene,.012,.006,26,0x8e9996,x,-.005,-5,.95);
+ for(let z=-17;z<=6;z+=1.5)cube(scene,23,.006,.012,0x8e9996,0,-.005,z,.95);
+ const gloss=new THREE.Mesh(new THREE.PlaneGeometry(24,26),new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.22,metalness:.03,clearcoat:.5,clearcoatRoughness:.2}));
+ gloss.rotation.x=-Math.PI/2;gloss.position.set(0,.002,-5);scene.add(gloss);
+}
+function addShelfStock(x,z,row){
+ const colors=[['#d54f35','#f1c45b'],['#397d99','#e6d8a7'],['#71934b','#e9d8a0'],['#9a5c9d','#e4b95b'],['#d08a38','#f5e6c4']];
+ for(let level=0;level<4;level++){
+  for(let n=0;n<7;n++){
+   const [base,accent]=colors[(n+level+row)%colors.length];
+   const w=.19+(n%3)*.025,h=.25+(n%2)*.045;
+   const pkg=cube(scene,w,h,.19,0xffffff,x-.48+n*.16,level*.57+.47,z-.13,.4);
+   pkg.material=detailedMaterial(['SNACKS','FRESH','DAILY','CHOCO','FOOD'][(n+level)%5],base,accent,.48);
+   const band=cube(scene,w*.85,.025,.012,0xf1e8d0,pkg.position.x,pkg.position.y-.035,z-.025,.65);
+  }
+ }
+}
+function addCeilingFixtures(){
+ for(let x=-7.5;x<=7.5;x+=3){
+  for(let z=-3;z>=-12;z-=4){
+   const panel=mesh(scene,new THREE.BoxGeometry(2.1,.055,.72),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xd8efff,emissiveIntensity:1.4,roughness:.25}),x,4.82,z);
+   const glow=new THREE.PointLight(0xfff1d9,26,8,1.7);glow.position.set(x,4.5,z);scene.add(glow);
+  }
+ }
+}
+function addCounterDetails(){
+ // brushed stainless edges and inset conveyor rails
+ const steel=material(0x9aa9aa,.24,.72),dark=material(0x18252a,.32,.55);
+ for(const x of [-.52,2.22]){
+  const rail=cube(scene,.07,.12,1.45,0x9aa9aa,x,1.22,-.75,.22);rail.material=steel;
+ }
+ cube(scene,2.58,.035,.035,0xb8c5c4,.85,1.22,-1.43,.2);
+ cube(scene,2.58,.035,.035,0x718181,.85,1.22,-.07,.3);
+ for(let i=0;i<8;i++){
+  const slat=cube(scene,.012,.008,1.1,0x879392,-.35+i*.34,1.187,-.75,.45);
+ }
+ // card reader with tactile buttons
+ for(let r=0;r<3;r++)for(let col=0;col<3;col++){
+  const key=cube(scene,.055,.018,.055,[0x9aa8ad,0x3e6570,0x9aa8ad][(r+col)%3],1.86+col*.12,1.39,-.19+r*.08,.32);
+ }
+}
+
 function mesh(parent,geometry,mat,x,y,z){const m=new THREE.Mesh(geometry,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function cube(parent,w,h,d,color,x,y,z,rough=.65){return mesh(parent,new THREE.BoxGeometry(w,h,d),material(color,rough),x,y,z);}
 function sphere(parent,r,color,x,y,z,detail=24){return mesh(parent,new THREE.SphereGeometry(r,detail,detail),material(color),x,y,z);}
@@ -138,14 +198,14 @@ function buildStore(){
  camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.08,55);camera.position.set(0,1.68,4.2);camera.lookAt(0,1.58,-2.8);
  renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
- renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.16;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
  scene.add(new THREE.HemisphereLight(0xeaf7ff,0x5a4537,2.15));
- const key=new THREE.DirectionalLight(0xffe5c7,3.2);key.position.set(-4,8,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene.add(key);
+ const key=new THREE.DirectionalLight(0xffe5c7,3.6);key.position.set(-4,8,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=10;key.shadow.camera.bottom=-10;key.shadow.bias=-.00025;scene.add(key);
  const fill=new THREE.PointLight(0x9ddcff,35,16);fill.position.set(4,3,-4);scene.add(fill);
  cube(scene,24,.18,30,0xb8b9b1,0,-.1,-5,.95);
  cube(scene,24,5,.25,0xe3e4dd,0,2.45,-13,.95);
  cube(scene,24,.25,30,0xddd8cc,0,5,-5,.95);
- // distant aisles and stocked shelves
+ addFloorDetails();\n // distant aisles and stocked shelves
  for(const side of [-1,1]){
   for(let row=0;row<2;row++){
    const z=-5-row*3.2,x=side*5.2;
@@ -161,7 +221,7 @@ function buildStore(){
  }
  // windows and ceiling lights
  for(let x=-8;x<=8;x+=4){const pane=mesh(scene,new THREE.PlaneGeometry(3.1,2.0),new THREE.MeshPhysicalMaterial({color:0x8cc9df,transparent:true,opacity:.42,roughness:.25}),x,3.0,-12.84);cube(scene,3.2,.05,.08,0x7b9296,x,4.03,-12.75);}
- for(let x=-5;x<=5;x+=2.5){cube(scene,1.8,.05,.45,0xfff3d9,x,4.75,-4,.4);const lamp=new THREE.PointLight(0xffe6bf,18,10);lamp.position.set(x,4.2,-4);scene.add(lamp);}
+ addCeilingFixtures();
  const sign=roundedLabel('ERFAN MARKET');sign.position.set(0,4.05,-12.65);sign.scale.set(3.4,.82,1);scene.add(sign);
  // cashier counter in immediate foreground
  cube(scene,4.9,.85,1.0,0x394c4e,0,.48,.45,.5);
@@ -179,7 +239,7 @@ function buildStore(){
  // cash drawer and note slots
  cube(scene,1.25,.16,.75,0x202b31,-1.9,.96,.85,.35);
  for(let i=0;i<5;i++)cube(scene,.21,.045,.52,0x506067,-2.32+i*.21,1.06,.84,.6);
- buildMonitor();buildScanner();buildHands();makeCustomer();
+ addCounterDetails();buildMonitor();buildScanner();buildHands();makeCustomer();
 }
 function createProduct(p,i){
  const g=new THREE.Group();let body;
