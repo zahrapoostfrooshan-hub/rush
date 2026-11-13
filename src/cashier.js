@@ -22,7 +22,7 @@ let customer,customerHead,scanner,scannerBeam,handScanner,handLeft,handRight,pro
 let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
 let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
-let promptTitle='',promptText='',toastTimer=0,keysDown={};
+let promptTitle='',promptText='',toastTimer=0,keysDown={},calcDisplay='0',calcAccumulator=null,calcOperator=null,calcFresh=true;
 
 function material(color,roughness=.72,metalness=0){return color && color.isMaterial ? color : new THREE.MeshStandardMaterial({color,roughness,metalness});}
 function mesh(parent,geometry,mat,x,y,z){const m=new THREE.Mesh(geometry,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -41,16 +41,34 @@ function notify(text){$('toast').textContent=text;$('toast').classList.add('show
 function drawMonitor(){
  if(!monitorCtx)return;
  const c=monitorCanvas,x=monitorCtx;x.clearRect(0,0,c.width,c.height);
- const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'#102c3b');g.addColorStop(1,'#071923');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
- x.direction='rtl';x.textAlign='right';x.fillStyle='#83e6c0';x.font='bold 29px Tahoma';x.fillText('ERFAN MARKET  |  صندوق شماره ۰۱',c.width-28,42);
- x.strokeStyle='#36596a';x.lineWidth=2;x.beginPath();x.moveTo(24,62);x.lineTo(c.width-24,62);x.stroke();
- x.fillStyle='#9ab5c4';x.font='bold 22px Tahoma';x.fillText('شرح کالا',c.width-30,100);x.textAlign='left';x.fillText('قیمت',c.width-200,100);
- let y=143;
- scanned.slice(-7).forEach(p=>{x.textAlign='right';x.fillStyle='#eef7f6';x.font='22px Tahoma';x.fillText(p.name,c.width-30,y);x.textAlign='left';x.fillStyle='#9be8c8';x.fillText(p.price.toLocaleString('fa-IR'),c.width-200,y);y+=42;});
- if(scanned.length===0){x.textAlign='center';x.fillStyle='#708b9b';x.font='22px Tahoma';x.fillText('منتظر اسکن کالا...',c.width/2,190);}
- x.fillStyle='#163e3c';x.fillRect(20,c.height-92,c.width-40,68);
- x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 23px Tahoma';x.fillText('مبلغ کل',c.width-38,c.height-50);
- x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 29px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-220,c.height-50);
+ const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'#142f40');g.addColorStop(1,'#071720');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
+ x.direction='rtl';x.textAlign='right';x.fillStyle='#83e6c0';x.font='bold 28px Tahoma';x.fillText('ERFAN MARKET  |  صندوق فروش',c.width-28,38);
+ x.strokeStyle='#36596a';x.lineWidth=2;x.beginPath();x.moveTo(24,55);x.lineTo(c.width-24,55);x.stroke();
+ // invoice area
+ x.fillStyle='#9ab5c4';x.font='bold 20px Tahoma';x.fillText('فاکتور کالاها',c.width-300,91);
+ x.fillStyle='#9ab5c4';x.font='bold 17px Tahoma';x.fillText('شرح کالا',c.width-30,126);x.textAlign='left';x.fillText('قیمت',c.width-260,126);
+ let y=164;
+ scanned.slice(-5).forEach(p=>{x.textAlign='right';x.fillStyle='#eef7f6';x.font='19px Tahoma';x.fillText(p.name,c.width-30,y);x.textAlign='left';x.fillStyle='#9be8c8';x.fillText(p.price.toLocaleString('fa-IR'),c.width-260,y);y+=36;});
+ if(scanned.length===0){x.textAlign='center';x.fillStyle='#708b9b';x.font='18px Tahoma';x.fillText('منتظر اسکن کالا...',c.width*.68,190);}
+ // calculator panel built into the POS display
+ const px=28,py=80,pw=315,ph=360;
+ x.fillStyle='#1b3543';x.beginPath();x.roundRect(px,py,pw,ph,16);x.fill();
+ x.fillStyle='#0a1a24';x.beginPath();x.roundRect(px+14,py+16,pw-28,64,9);x.fill();
+ x.direction='ltr';x.textAlign='right';x.fillStyle='#9bf0c7';x.font='bold 27px Tahoma';
+ const calcText=phase==='payment'&&payment==='cash'?(cashInput||'0'):phase==='manual'?(manualDigits||'0'):(calcDisplay||'0');
+ x.fillText(String(calcText).slice(-18),px+pw-26,py+59);
+ const keys=[['7','8','9','÷'],['4','5','6','×'],['1','2','3','−'],['C','0','=','+']];
+ const kw=63,kh=55,gap=8;
+ keys.forEach((row,ri)=>row.forEach((k,ci)=>{
+  const bx=px+15+ci*(kw+gap),by=py+98+ri*(kh+gap);
+  x.fillStyle=['÷','×','−','+','='].includes(k)?'#236653':k==='C'?'#8c463f':'#294858';
+  x.beginPath();x.roundRect(bx,by,kw,kh,9);x.fill();
+  x.fillStyle='#f4fbf8';x.font='bold 22px Arial';x.textAlign='center';x.fillText(k,bx+kw/2,by+35);
+ }));
+ x.direction='rtl';x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 20px Tahoma';x.fillText('مبلغ کل',c.width-30,c.height-68);
+ x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 26px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-260,c.height-68);
+ x.fillStyle='#183c3c';x.fillRect(c.width-360,c.height-48,330,28);
+ x.fillStyle='#9ac8b5';x.font='14px Tahoma';x.textAlign='right';x.fillText(phase==='payment'&&payment==='cash'?'مبلغ دریافتی را وارد کن':'ماشین حساب صندوق',c.width-38,c.height-28);
  monitorTexture.needsUpdate=true;
 }
 function buildMonitor(){
@@ -76,15 +94,15 @@ function buildHands(){
  handLeft=new THREE.Group();handRight=new THREE.Group();
  capsule(handLeft,.105,.38,0x263e55,0,-.2,0);
  sphere(handLeft,.12,0xc78f70,0,-.43,-.02);
- handLeft.position.set(-.48,.65,1.15);scene.add(handLeft);
+ handLeft.position.set(-.48,-.48,-.9);camera.add(handLeft);
  capsule(handRight,.105,.38,0x263e55,0,-.2,0);
  sphere(handRight,.12,0xc78f70,0,-.43,-.02);
- handRight.position.set(.48,.65,1.15);scene.add(handRight);
+ handRight.position.set(.48,-.48,-.9);camera.add(handRight);
  handScanner=new THREE.Group();
  cube(handScanner,.12,.2,.35,0x202d35,0,0,0,.3);
  cube(handScanner,.1,.12,.1,0x2d414b,0,-.13,.08,.3);
  const glass=mesh(handScanner,new THREE.BoxGeometry(.09,.015,.09),new THREE.MeshBasicMaterial({color:0x5fffc6,emissive:0x27bd8b}),0,.105,-.1);
- handScanner.position.set(.45,.65,.72);handScanner.visible=false;scene.add(handScanner);
+ handScanner.position.set(.48,-.42,-.82);handScanner.visible=false;camera.add(handScanner);
 }
 function makeCustomer(){
  if(customer)scene.remove(customer);
@@ -189,13 +207,13 @@ function newOrder(){
  order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;if(handScanner)handScanner.visible=false;if(handLeft)handLeft.visible=true;
  const count=3+Math.floor(Math.random()*3);for(let i=0;i<count;i++)order.push(catalog[Math.floor(Math.random()*catalog.length)]);
  payment=Math.random()<.5?'cash':'card';cashOffer=0;
- if(payment==='cash'){const extra=[0,20000,50000,100000,150000][Math.floor(Math.random()*5)];cashOffer=Math.ceil((total+extra)/10000)*10000;}
+ if(payment==='cash'){const orderTotal=order.reduce((sum,p)=>sum+p.price,0);const extra=[0,20000,50000,100000,150000][Math.floor(Math.random()*5)];cashOffer=Math.ceil((orderTotal+extra)/10000)*10000;}
  clearBelt();order.forEach(createProduct);
  phase='pickup';setPrompt('۱. بارکدخوان را بردار','برای برداشتن بارکدخوان کلید E را فشار بده.');updateHud();
  $('paymentHint').textContent='روش پرداخت در پایان خرید مشخص می‌شود.';
 }
 function takeScanner(){
- if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;phase='scan';
+ if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;handRight.visible=true;phase='scan';
  setPrompt('۲. کالا را اسکن کن','بارکدخوان در دست توست. برای اسکن هر کالا کلید F را بزن.');notify('بارکدخوان برداشته شد.');updateHud();
 }
 function scan(){
@@ -238,18 +256,29 @@ function enterKey(){
  if(phase==='manual'){const value=Number(manualDigits);if(value===order[itemIndex].price){registerProduct('manual');}else{score=Math.max(0,score-4);notify('قیمت صحیح نیست. برچسب کالا را بررسی کن.');manualDigits='';$('inputDisplay').textContent='قیمت را دوباره وارد کن';$('score').textContent=score.toLocaleString('fa-IR')+'٪';}}
  else if(phase==='payment'&&payment==='cash')receiveCash();
 }
+function handleCalculatorKey(k){
+ if(k==='C'){calcDisplay='0';calcAccumulator=null;calcOperator=null;calcFresh=true;}
+ else if(['+','−','×','÷'].includes(k)){calcAccumulator=Number(calcDisplay)||0;calcOperator=k;calcFresh=true;}
+ else if(k==='='){const b=Number(calcDisplay)||0,a=calcAccumulator??b;calcDisplay=String(calcOperator==='+'?a+b:calcOperator==='−'?a-b:calcOperator==='×'?a*b:calcOperator==='÷'?(b?a/b:0):b);calcAccumulator=null;calcOperator=null;calcFresh=true;}
+ else if(/^\d$/.test(k)){calcDisplay=calcFresh||calcDisplay==='0'?k:calcDisplay+k;calcFresh=false;}
+ drawMonitor();
+}
 function setupKeyboard(){
- addEventListener('keydown',e=>{
+ window.addEventListener('keydown',e=>{
+  const key=e.key.toLowerCase();
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(e.repeat)return;
-  if(e.key.toLowerCase()==='e')takeScanner();
-  else if(e.key.toLowerCase()==='f')scan();
-  else if(e.key.toLowerCase()==='c')swipeCard();
-  else if(e.code==='Space')nextCustomer();
-  else if(e.key==='Enter')enterKey();
-  else if(e.key==='Backspace')handleNumber('Backspace');
-  else if(/^[0-9]$/.test(e.key)){if(phase==='change')giveNote(e.key);else handleNumber(e.key);}
+  if(key==='e'){e.preventDefault();takeScanner();}
+  else if(key==='f'){e.preventDefault();scan();}
+  else if(key==='c'){e.preventDefault();swipeCard();}
+  else if(e.code==='Space'){e.preventDefault();nextCustomer();}
+  else if(e.key==='Enter'){e.preventDefault();enterKey();}
+  else if(e.key==='Backspace'){e.preventDefault();handleNumber('Backspace');handleCalculatorKey('C');}
+  else if(/^[0-9]$/.test(e.key)){e.preventDefault();if(phase==='change')giveNote(e.key);else {handleNumber(e.key);handleCalculatorKey(e.key);}}
+  else if(['+','-','*','/','='].includes(e.key)){e.preventDefault();handleCalculatorKey(({'+':'+','-':'−','*':'×','/':'÷','=':'='})[e.key]);}
  });
+ window.addEventListener('blur',()=>{keysDown={};});
+ document.body.tabIndex=0;document.body.focus();
 }
 function animate(){
  requestAnimationFrame(animate);const t=clock.getElapsedTime();
@@ -259,7 +288,7 @@ function animate(){
 }
 function resize(){if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
 function start(){
- buildStore();clock=new THREE.Clock();$('world').style.display='none';setupKeyboard();$('drawerCash').textContent=money(drawerBalance);$('inputDisplay').textContent='منتظر دریافت مبلغ';
- $('startScreen').classList.add('hidden');$('game').classList.remove('hidden');newOrder();addEventListener('resize',resize);
+ buildStore();clock=new THREE.Clock();$('world').style.display='block';setupKeyboard();$('drawerCash').textContent=money(drawerBalance);$('inputDisplay').textContent='ماشین حساب آماده است';
+ $('startScreen').classList.add('hidden');$('game').classList.remove('hidden');newOrder();animate();addEventListener('resize',resize);
 }
 start();

@@ -8,7 +8,7 @@
 .start-card h1{margin:10px 0;font-size:clamp(42px,8vw,76px);letter-spacing:2px;direction:ltr}.start-card h1 span{color:#79e5bd}.start-card h2{margin:0;color:#8ca6b8;font-size:14px;letter-spacing:6px;direction:ltr}
 .start-card small{color:#8099aa;font-size:10px}.start-loader{height:3px;width:210px;margin:32px auto 16px;background:#ffffff1b;border-radius:9px;overflow:hidden}.start-loader i{display:block;height:100%;background:#79e5bd;animation:loading 2.1s ease forwards}
 @keyframes loading{to{width:100%}}@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.game{position:fixed;inset:0;background:#182b34 url("https://images.openai.com/static-rsc-4/xsB4jwsrIA8WVjJfvikOgDHSTI2JVAP4vAbBPr3mm26Ci6p6rgLnM7YdzsCzX2Dlrkcsr9OIsZLpZfx_wkMNjircutsyGy8iaCo7tgfoFqLEJvw5I-ypeH1xevwfFV-O59ijBfZZ95i_ykyljMluM0Ht1F6DdbkFSCYMtD1sirXRm1eFMLSf7HWA2EWYZodD?purpose=fullsize") center center / cover no-repeat}#world{display:none!important}
+.game{position:fixed;inset:0;background:#182b34}#world{position:absolute;inset:0;width:100%;height:100%;display:block}
 .guide-bar{position:absolute;z-index:5;top:14px;left:50%;transform:translateX(-50%);width:min(760px,calc(100vw - 32px));min-height:68px;display:flex;align-items:center;gap:14px;padding:11px 15px;background:#101c28ed;border:1px solid #9de8d04a;border-radius:14px;box-shadow:0 12px 38px #0005;backdrop-filter:blur(14px)}
 .guide-badge{flex:none;padding:8px 10px;background:#1c4c43;color:#a9f3d7;border-radius:8px;font-size:10px;font-weight:bold}
 .guide-copy{display:flex;flex:1;flex-direction:column;gap:5px;min-width:0}.guide-copy b{font-size:13px;color:#f3fbf8}.guide-copy span{font-size:11px;color:#a8bdc8;line-height:1.7}
