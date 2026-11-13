@@ -109,7 +109,27 @@ function createWorld(){
  for(let x=-9;x<=9;x+=6){box(scene,.14,.18,19,0x9baeb0,x,2.9,0);const lamp=new THREE.Mesh(new THREE.BoxGeometry(3.2,.06,.55),new THREE.MeshBasicMaterial({color:0xfff1ce}));lamp.position.set(x,2.78,-1);scene.add(lamp);const l=new THREE.PointLight(0xffe8c7,22,10);l.position.set(x,2.45,-1);scene.add(l);}
  box(scene,7,.16,7,0x9baeb0,7,0,-5);box(scene,7,2.8,.3,0xb8c8c7,7,1.4,-8.5);box(scene,.3,2.8,7,0xb8c8c7,3.5,1.4,-5);box(scene,.3,2.8,7,0xb8c8c7,10.5,1.4,-5);
  for(let i=0;i<3;i++)box(scene,1.1,1,1,0x967553,5+i*2,.5,-6.8);
- box(scene,3,.95,.9,0x315f5d,-7,.48,6);box(scene,.8,.18,.62,0x253d43,-7,1.05,6);box(scene,.45,.3,.04,0x8fffe1,-7,1.35,6.42);
+ box(scene,3,.95,.9,0x315f5d,-7,.48,6);
+ box(scene,2.55,.07,.72,0x253d43,-7,.99,6);
+ box(scene,.8,.18,.62,0x253d43,-7,1.05,6);
+ box(scene,.45,.3,.04,0x8fffe1,-7,1.35,6.42);
+ const checkoutScreen=new THREE.Mesh(new THREE.BoxGeometry(.38,.28,.06),new THREE.MeshStandardMaterial({color:0x172b35,emissive:0x1d6870,emissiveIntensity:.8,roughness:.25}));
+ checkoutScreen.position.set(-7.65,1.32,5.95);checkoutScreen.rotation.x=-.18;scene.add(checkoutScreen);
+ const scanner=new THREE.Mesh(new THREE.BoxGeometry(.34,.08,.26),new THREE.MeshStandardMaterial({color:0x252e35,roughness:.3,metalness:.25}));
+ scanner.position.set(-6.45,1.05,6);scene.add(scanner);
+ const scannerGlow=new THREE.Mesh(new THREE.BoxGeometry(.22,.012,.12),new THREE.MeshBasicMaterial({color:0x63f0c4}));
+ scannerGlow.position.set(-6.45,1.1,6);scene.add(scannerGlow);
+ // Glass entrance and a clear store identity sign make the space read as a real shop.
+ const glassMat=new THREE.MeshPhysicalMaterial({color:0x8fc8d4,transparent:true,opacity:.28,roughness:.12,metalness:.05,transmission:.18});
+ for(const x of [-1.35,1.35]){const pane=new THREE.Mesh(new THREE.BoxGeometry(2.55,2.35,.045),glassMat);pane.position.set(x,1.3,9.78);scene.add(pane);box(scene,.07,2.5,.12,0x536d73,x*2,1.3,9.72);}
+ box(scene,5.8,.32,.18,0x24434a,0,2.75,-9.72);
+ const storeSign=spriteLabel('ERFAN MARKET');storeSign.position.set(0,2.77,-9.58);storeSign.scale.set(2.4,.62,1);scene.add(storeSign);
+ // Back-wall windows with mullions add depth beyond the shelves.
+ for(const x of [-8.5,-4.5,0,4.5,8.5]){
+  const win=new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.05),new THREE.MeshPhysicalMaterial({color:0x91c8d9,roughness:.16,metalness:.08,transparent:true,opacity:.72}));
+  win.position.set(x,2.05,-9.77);scene.add(win);
+  box(scene,2.5,.07,.09,0x718b8e,x,2.62,-9.68);box(scene,2.5,.07,.09,0x718b8e,x,1.48,-9.68);box(scene,.07,1.2,.09,0x718b8e,x,2.05,-9.68);
+ }
  shelves=[];shelf(-7,-2,0);shelf(-3,-2,1);shelf(1,-2,2);shelf(-7,2,3);box(scene,.22,3,.25,0x334d58,-4.1,1.5,10);box(scene,.22,3,.25,0x334d58,4.1,1.5,10);
  for(const p of [[-10,8],[10,8],[-10,-8],[10,-8]])plant(p[0],p[1]);
  player=character(0x168f7b);player.position.set(0,0,7);scene.add(player);customers=[];postFX();spawnCustomer();spawnCustomer();
