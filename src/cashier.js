@@ -18,7 +18,7 @@ const catalog = [
 ];
 
 let scene,camera,renderer,clock,monitorTexture,monitorCanvas,monitorCtx;
-let customer,customerHead,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[];
+let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[];
 let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
 let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
@@ -167,30 +167,65 @@ function buildHands(){
 function makeCustomer(){
  if(customer)scene.remove(customer);
  customer=new THREE.Group();scene.add(customer);
- const shirt=material([0x486f80,0x9a5948,0x665c8e,0x526c50,0x9b7545][customerNumber%5],.92);
- const skin=material([0xd3a080,0xb97858,0xe0b99a,0x98694e][customerNumber%4],.8);
- const hair=material([0x30251f,0x4c3427,0x211e1c,0x6c4b35][customerNumber%4],.9);
- const pants=material(0x34404b);
- capsule(customer,.34,.55,shirt,0,1.45,-2.4);
- capsule(customer,.095,.48,shirt,-.43,1.48,-2.4);capsule(customer,.095,.48,shirt,.43,1.48,-2.4);
- sphere(customer,.12,skin,-.43,1.19,-2.4);sphere(customer,.12,skin,.43,1.19,-2.4);
- capsule(customer,.105,.48,pants,-.15,.73,-2.4);capsule(customer,.105,.48,pants,.15,.73,-2.4);
- const head=sphere(customer,.255,skin,0,2.12,-2.4,32);customerHead=head;
- // ears, nose, jaw, eyes, eyebrows and mouth
- sphere(customer,.055,skin,-.25,2.12,-2.4);sphere(customer,.055,skin,.25,2.12,-2.4);
- sphere(customer,.045,skin,0,2.06,-2.17,16);
+ const shirtColors=[0x496d7b,0x925c4b,0x625b83,0x526c50,0x927248];
+ const skinColors=[0xd9a184,0xb97858,0xe5bea0,0x98694e];
+ const hairColors=[0x30251f,0x4c3427,0x211e1c,0x6c4b35];
+ const shirt=new THREE.MeshStandardMaterial({color:shirtColors[customerNumber%5],roughness:.82});
+ const skin=new THREE.MeshStandardMaterial({color:skinColors[customerNumber%4],roughness:.88});
+ const hair=new THREE.MeshStandardMaterial({color:hairColors[customerNumber%4],roughness:.92});
+ const pants=material(0x303d49,.9),shoe=material(0x1d252b,.5);
+ // torso, jacket seams and neck
+ const torso=capsule(customer,.34,.55,shirt,0,1.43,-2.4);
+ const collar=mesh(customer,new THREE.ConeGeometry(.16,.18,4),material(0xe4e7df),0,1.77,-2.17);collar.rotation.y=Math.PI/4;
+ cube(customer,.012,.48,.012,0x263e48,-.16,1.42,-2.055,.9);
+ // shoulder and articulated arms, facing the cashier
+ customerArmLeft=new THREE.Group();customerArmRight=new THREE.Group();
+ customerArmLeft.position.set(-.34,1.67,-2.4);customerArmRight.position.set(.34,1.67,-2.4);
+ capsule(customerArmLeft,.105,.42,shirt,0,-.25,0);
+ sphere(customerArmLeft,.105,skin,0,-.52,.04);
+ capsule(customerArmRight,.105,.42,shirt,0,-.25,0);
+ sphere(customerArmRight,.105,skin,0,-.52,.04);
+ customer.add(customerArmLeft,customerArmRight);
+ // trousers, knees and shoes
  for(const side of [-1,1]){
-  sphere(customer,.028,0x202020,side*.09,2.15,-2.17,12);
-  capsule(customer,.025,.07,hair,side*.09,2.205,-2.18);
+  capsule(customer,.105,.48,pants,side*.15,.72,-2.4);
+  sphere(customer,.11,shoe,side*.15,.37,-2.29);
+  cube(customer,.035,.035,.025,0x66727a,side*.15,.73,-2.285,.9);
  }
- const mouth=mesh(customer,new THREE.BoxGeometry(.085,.012,.012),material(0x7d3c3a),0,1.985,-2.17);
- const hairTop=mesh(customer,new THREE.SphereGeometry(.26,24,16,0,Math.PI*2,0,Math.PI*.55),hair,0,2.23,-2.42);
- // hairline and side locks
- capsule(customer,.055,.18,hair,-.22,2.13,-2.43);capsule(customer,.055,.18,hair,.22,2.13,-2.43);
- // Neck
- capsule(customer,.09,.15,skin,0,1.83,-2.4);
- // simple collar and shirt seams
- cube(customer,.26,.07,.05,0xd5d9d3,0,1.78,-2.18,.9);
+ // neck and shaped head
+ capsule(customer,.09,.16,skin,0,1.83,-2.4);
+ sphere(customer,.255,skin,0,2.12,-2.4,32);
+ // ears with inner ear shading
+ for(const side of [-1,1]){
+  sphere(customer,.061,skin,side*.245,2.12,-2.39,20);
+  sphere(customer,.026,0x98644f,side*.27,2.12,-2.345,16);
+  // eye whites, irises and pupils
+  sphere(customer,.055,0xf2eee6,side*.09,2.16,-2.174,20);
+  sphere(customer,.027,0x66503b,side*.09,2.16,-2.124,16);
+  sphere(customer,.013,0x151a1b,side*.09,2.16,-2.099,12);
+  sphere(customer,.008,0xffffff,side*.08,2.177,-2.086,8);
+  const brow=capsule(customer,.018,.09,hair,side*.09,2.225,-2.19);
+  brow.rotation.z=side*.08;
+ }
+ // nose bridge and nostrils
+ const nose=mesh(customer,new THREE.SphereGeometry(.045,16,12),skin,0,2.075,-2.155);nose.scale.set(.72,1.2,.8);
+ sphere(customer,.012,0x80513f,-.018,2.045,-2.17,10);sphere(customer,.012,0x80513f,.018,2.045,-2.17,10);
+ // lips and chin
+ capsule(customer,.014,.065,material(0x8e514d),0,1.985,-2.165);
+ sphere(customer,.075,skin,0,1.94,-2.34,18);
+ // hair cap, fringe and sideburns
+ const cap=mesh(customer,new THREE.SphereGeometry(.263,32,20,0,Math.PI*2,0,Math.PI*.56),hair,0,2.23,-2.415);
+ for(let i=0;i<5;i++){
+  const lock=sphere(customer,.055,hair,-.18+i*.09,2.31+Math.sin(i*.7)*.015,-2.205,14);
+  lock.scale.set(1.25,.7,.75);
+ }
+ capsule(customer,.052,.2,hair,-.235,2.13,-2.42);
+ capsule(customer,.052,.2,hair,.235,2.13,-2.42);
+ // subtle clothing details
+ for(let side of [-1,1]){
+  const seam=cube(customer,.012,.35,.012,0x9aa9a3,side*.25,1.42,-2.07,.9);
+  seam.material.transparent=true;seam.material.opacity=.3;
+ }
  customer.position.y=0;
 }
 function buildStore(){
@@ -243,14 +278,38 @@ function buildStore(){
 }
 function createProduct(p,i){
  const g=new THREE.Group();let body;
+ const palette={
+  'نان تست':['#c58b4e','#f4d8a1'],'شیر کم‌چرب':['#dce9ee','#5593b7'],'آب پرتقال':['#e98a27','#f8d35c'],
+  'ماکارونی':['#d7a64e','#f5e7b9'],'شکلات تلخ':['#49312c','#c69b6a'],'سیب قرمز':['#9f2929','#e9b36c'],
+  'قهوه':['#493329','#cba46b'],'چیپس':['#d2aa35','#e8e0a0'],'پنیر':['#e5d8a0','#b99042'],'آب معدنی':['#76b9d8','#e4f5f8'],'بیسکویت':['#a97748','#e9d1a0']
+ };
+ const [base,accent]=palette[p.name]||['#698b85','#d7d9bd'];
+ const pack=detailedMaterial(p.name,base,accent,.4);
+ const side=material(p.color,.42);
  if(p.shape==='bottle'){
-  body=mesh(g,new THREE.CylinderGeometry(.12,.16,.46,20),material(p.color,.3),0,.26,0);
-  mesh(g,new THREE.CylinderGeometry(.055,.07,.14,16),material(0xe8e9df,.3),0,.55,0);
-  mesh(g,new THREE.CylinderGeometry(.065,.065,.045,16),material(0x2f7a65,.35),0,.65,0);
- }else if(p.shape==='ball'){body=sphere(g,.2,p.color,0,.2,0,24);}
- else if(p.shape==='bag'){body=mesh(g,new THREE.BoxGeometry(.3,.42,.16),material(p.color,.45),0,.22,0);}
- else{body=mesh(g,new THREE.BoxGeometry(.34,.37,.27),material(p.color,.65),0,.19,0);}
- const tag=roundedLabel(p.name+'  |  '+p.price.toLocaleString('fa-IR')+' تومان');tag.position.set(0,.95,0);tag.scale.set(1.28,.32,1);g.add(tag);
+  const bodyGeo=new THREE.CylinderGeometry(.13,.17,.5,32,1);
+  body=mesh(g,bodyGeo,pack,0,.29,0);
+  const shoulder=mesh(g,new THREE.CylinderGeometry(.07,.13,.12,32),side,0,.6,0);
+  mesh(g,new THREE.CylinderGeometry(.055,.055,.13,24),material(0xf0eee4,.32),0,.72,0);
+  mesh(g,new THREE.CylinderGeometry(.063,.063,.045,24),material(0x2e8b68,.28),0,.81,0);
+  const wrap=mesh(g,new THREE.CylinderGeometry(.132,.132,.22,32,1,true),new THREE.MeshStandardMaterial({map:makePackageTexture(p.name,base,accent),roughness:.48,side:THREE.DoubleSide}),0,.31,0);
+ }else if(p.shape==='ball'){
+  body=sphere(g,.205,p.color,0,.21,0,32);
+  const shine=sphere(g,.055,0xffffff,-.07,.31,.13,12);shine.material.transparent=true;shine.material.opacity=.2;
+ }else if(p.shape==='bag'){
+  body=mesh(g,new THREE.BoxGeometry(.34,.48,.18),pack,0,.25,0);
+  body.rotation.z=-.035;
+  const top=cube(g,.33,.045,.19,0xf2e7bd,0,.5,0,.42);
+ }else{
+  body=mesh(g,new THREE.BoxGeometry(.37,.39,.29),pack,0,.22,0);
+  const top=mesh(g,new THREE.BoxGeometry(.35,.018,.27),material(0xf0e5cb,.5),0,.42,0);
+  const seam=cube(g,.012,.34,.012,0xf3e7c8,.187,.22,.15,.65);
+ }
+ // small barcode strip and shelf-ready edge details
+ const barcode=cube(g,.075,.095,.009,0xf5f3e8,.08,.16,.151,.9);
+ for(let k=0;k<6;k++)cube(g,.004,.06,.002,0x252525,.052+k*.01,.16,.157,.9);
+ const tag=roundedLabel(p.name+'  |  '+p.price.toLocaleString('fa-IR')+' تومان');
+ tag.position.set(0,1.02,0);tag.scale.set(1.34,.34,1);g.add(tag);
  g.position.set(-.2+(i%3)*.78,1.2,-.65-(i%2)*.04);g.rotation.y=(i%2)*.18;scene.add(g);productsOnBelt.push(g);
 }
 function clearBelt(){productsOnBelt.forEach(p=>scene.remove(p));productsOnBelt=[];}
@@ -342,7 +401,7 @@ function setupKeyboard(){
 }
 function animate(){
  requestAnimationFrame(animate);const t=clock.getElapsedTime();
- if(customer){customer.position.y=Math.sin(t*1.3)*.012;customer.rotation.y=Math.sin(t*.55)*.025;}
+ if(customer){customer.position.y=Math.sin(t*1.3)*.008;customer.rotation.y=Math.sin(t*.55)*.035;if(customerArmLeft)customerArmLeft.rotation.x=Math.sin(t*.9)*.12;if(customerArmRight)customerArmRight.rotation.x=.18+Math.sin(t*.7+1)*.08;}
  if(handScanner&&handScanner.visible){handScanner.rotation.z=Math.sin(t*2)*.025;}
  renderer.render(scene,camera);
 }
