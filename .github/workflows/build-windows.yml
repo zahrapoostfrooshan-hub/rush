@@ -1,8 +1,14 @@
 
-name: Shop Rush 2 - Windows Build & Release
+name: Shop Rush 2 - Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: v1.0.1)"
+        required: true
+        default: "v1.0.1"
+
   push:
     tags:
       - "v*"
@@ -11,59 +17,74 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-release:
+    name: Build Windows EXE
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Repository
+      # 1. دریافت سورس پروژه
+      - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. نصب Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
+      # 3. نصب وابستگی‌ها
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Build Windows EXE
-        run: npm run dist:win -- --publish never
+      # 4. ساخت نسخه وب بازی
+      - name: Build Game
+        run: npm run build
 
-      - name: Check Release Files
+      # 5. ساخت فایل‌های ویندوز
+      - name: Build Windows Installers
+        run: npx electron-builder --win nsis portable --publish never
+
+      # 6. بررسی فایل‌های خروجی
+      - name: Verify EXE Files
         shell: pwsh
         run: |
           if (!(Test-Path "release")) {
-            throw "Release folder not found!"
+            throw "Release directory not found!"
           }
 
-          $files = Get-ChildItem "release" -Filter "*.exe"
+          $files = @(Get-ChildItem "release" -Filter "*.exe" -File)
 
           if ($files.Count -lt 2) {
-            throw "Setup and Portable EXE files were not both generated!"
+            throw "Expected Setup and Portable EXE files."
           }
 
-          Write-Host "Generated EXE files:"
-          $files | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "Build completed successfully:"
+          $files | ForEach-Object {
+            Write-Host $_.Name
+          }
 
-      - name: Publish GitHub Release
+      # 7. انتشار در GitHub Releases
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Shop Rush 2 - Erfan Edition v1.0.0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ inputs.version || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Shop Rush 2 - Erfan Edition ${{ inputs.version || github.ref_name }}
           body: |
             # Shop Rush 2 - Erfan Edition
 
-            Windows 64-bit Release
+            Windows 64-bit Edition
 
-            Included:
-            - Windows Installer (Setup)
-            - Portable Version
+            ## Downloads
 
-            Enjoy the game!
+            - Windows Setup Installer
+            - Portable Windows Version
+
+            Built automatically using GitHub Actions.
           draft: false
           prerelease: false
+          overwrite_files: true
+          fail_on_unmatched_files: true
           files: |
             release/*.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
