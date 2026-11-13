@@ -15,7 +15,7 @@ const products = [
   {name:'آب معدنی',price:15000,color:0x83c9e7,shape:'bottle'}
 ];
 const moneyFmt = n => Math.round(n).toLocaleString('fa-IR')+' تومان';
-let scene,camera,renderer,clock,customerGroup,productMeshes=[],basket=[],index=0,scanned=[],total=0,paid=0,changeDue=0,changeGiven=0,drawerCash=500000,scannerFault=null,scanFails=0,phase='scan',paymentType='cash',customerNo=1,score=100,waiting=false;
+let scene,camera,renderer,clock,customerGroup,productMeshes=[],basket=[],index=0,scanned=[],total=0,paid=0,changeDue=0,changeGiven=0,drawerCash=500000,scannerFault=null,scanFails=0,phase='scan',paymentType='cash',cashOffered=0,customerNo=1,score=100,waiting=false;
 
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2400);}
 function labelSprite(text){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#102333';ctx.beginPath();ctx.roundRect(8,8,496,112,20);ctx.fill();ctx.strokeStyle='#75e1bb';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 42px Tahoma';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,65);const tex=new THREE.CanvasTexture(canvas);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.25,.31,1);return s;}
