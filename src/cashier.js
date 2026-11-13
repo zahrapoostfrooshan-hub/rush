@@ -19,7 +19,7 @@ const catalog = [
 
 let scene,camera,renderer,clock,monitorTexture,monitorCanvas,monitorCtx;
 let customer,customerHead,customerArmLeft,customerArmRight,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[],beltRollers=[],cashDrawer,cardProp,cashProp;
-let actionBusy=false,cardStage='idle',pinDigits='';
+let actionBusy=false,cardStage='idle',pinDigits='',cardDisplay,handLaser;
 let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
 let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
 let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
@@ -162,16 +162,16 @@ function buildHands(){
  const skin=material(0xc78f70,.82),sleeve=material(0x263e55,.88);
  handLeft=new THREE.Group();handRight=new THREE.Group();
  capsule(handLeft,.105,.38,0x263e55,0,-.2,0);
- sphere(handLeft,.12,0xc78f70,0,-.43,-.02);
+ sphere(handLeft,.12,0xc78f70,0,-.43,-.02);\n for(let f=0;f<4;f++){const finger=capsule(handLeft,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}\n const leftThumb=capsule(handLeft,.03,.09,0xc78f70,-.13,-.43,.02);leftThumb.rotation.z=-.7;
  handLeft.position.set(-.48,-.48,-.9);camera.add(handLeft);
  capsule(handRight,.105,.38,0x263e55,0,-.2,0);
- sphere(handRight,.12,0xc78f70,0,-.43,-.02);
+ sphere(handRight,.12,0xc78f70,0,-.43,-.02);\n for(let f=0;f<4;f++){const finger=capsule(handRight,.025,.09,0xc78f70,-.075+f*.05,-.49,.075);finger.rotation.x=-.25;}\n const rightThumb=capsule(handRight,.03,.09,0xc78f70,-.13,-.43,.02);rightThumb.rotation.z=-.7;
  handRight.position.set(.48,-.48,-.9);camera.add(handRight);
  handScanner=new THREE.Group();
  cube(handScanner,.12,.2,.35,0x202d35,0,0,0,.3);
  cube(handScanner,.1,.12,.1,0x2d414b,0,-.13,.08,.3);
  const glass=mesh(handScanner,new THREE.BoxGeometry(.09,.015,.09),new THREE.MeshBasicMaterial({color:0x5fffc6,emissive:0x27bd8b}),0,.105,-.1);
- handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);handScanner.visible=false;camera.add(handScanner);
+ handScanner.position.set(.58,-.82,-.62);handScanner.rotation.set(-.35,.15,-.35);handScanner.visible=false;camera.add(handScanner);\n const laser=new THREE.Mesh(new THREE.PlaneGeometry(.28,.012),new THREE.MeshBasicMaterial({color:0x5dffc7,transparent:true,opacity:.9,side:THREE.DoubleSide}));laser.position.set(0,.12,-.28);laser.visible=false;handScanner.add(laser);handLaser=laser;
 }
 function makeCustomer(){
  if(customer)scene.remove(customer);
@@ -280,7 +280,7 @@ function buildStore(){
  cube(scene,.32,.025,.34,0x6bf0c1,2.05,1.19,.15,.22);
  cube(scene,.55,.18,.5,0x25363e,2.0,1.05,-.05,.4);
  cube(scene,.45,.28,.06,0x152a34,2.0,1.27,-.22,.3);
- const cardScreen=mesh(scene,new THREE.PlaneGeometry(.35,.19),new THREE.MeshBasicMaterial({color:0x5fe0ae}),2,1.28,-.184);
+ cardDisplay=mesh(scene,new THREE.PlaneGeometry(.35,.19),new THREE.MeshBasicMaterial({color:0x5fe0ae}),2,1.28,-.184);
  // cash drawer and note slots
  cashDrawer=new THREE.Group();cashDrawer.position.set(-1.9,.96,.85);scene.add(cashDrawer);
  cube(cashDrawer,1.25,.16,.75,0x202b31,0,0,0,.35);cube(cashDrawer,1.18,.045,.68,0x111b20,0,.095,0,.45);
@@ -375,7 +375,7 @@ function startPayment(){
 }
 async function swipeCard(){
  if(phase!=='payment'||payment!=='card'||actionBusy)return;actionBusy=true;
- if(cardStage==='take'){const rest={x:handRight.position.x,y:handRight.position.y,z:handRight.position.z,rx:handRight.rotation.x,ry:handRight.rotation.y,rz:handRight.rotation.z};await tweenObject(handRight,{x:.22,y:-.25,z:-.58,rx:-.55,ry:.12,rz:.22},260);await tweenObject(cardProp,{x:.42,y:1.34,z:-.82},520);await tweenObject(handRight,rest,260);cardStage='swipe';setPrompt('۵. کشیدن کارت','کارت را روی شیار کارت‌خوان بکش. دوباره C را بزن.');notify('کارت دریافت شد.');}
+ if(cardStage==='take'){const rest={x:handRight.position.x,y:handRight.position.y,z:handRight.position.z,rx:handRight.rotation.x,ry:handRight.rotation.y,rz:handRight.rotation.z};const armRest={rx:customerArmRight.rotation.x,ry:customerArmRight.rotation.y,rz:customerArmRight.rotation.z};await tweenObject(customerArmRight,{rx:-.72,ry:.08,rz:-.12},360);await tweenObject(handRight,{x:.22,y:-.25,z:-.58,rx:-.55,ry:.12,rz:.22},260);await tweenObject(cardProp,{x:.42,y:1.34,z:-.82},520);await tweenObject(handRight,rest,260);await tweenObject(customerArmRight,armRest,300);cardStage='swipe';setPrompt('۵. کشیدن کارت','کارت را روی شیار کارت‌خوان بکش. دوباره C را بزن.');notify('کارت دریافت شد.');}
  else if(cardStage==='swipe'){await tweenObject(cardProp,{x:1.92,y:1.38,z:-.05},360);await tweenObject(cardProp,{x:1.62,y:1.38,z:-.05},430);await tweenObject(cardProp,{x:1.3,y:1.38,z:-.05},350);scene.remove(cardProp);cardProp=null;cardStage='pin';pinDigits='';setPrompt('۶. واردکردن رمز کارت','رمز آزمایشی ۴ رقمی را با کیبورد وارد کن و Enter بزن.');notify('کارت خوانده شد. رمز کارت را وارد کن.');}
  actionBusy=false;drawMonitor();updateHud();
 }
