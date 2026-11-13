@@ -2,147 +2,264 @@ import './style.css';
 import * as THREE from 'three';
 
 const $ = id => document.getElementById(id);
-const products = [
-  {name:'نان',price:18000,color:0xc98b45,shape:'box'},
-  {name:'شیر',price:42000,color:0xe8eee8,shape:'bottle'},
-  {name:'آبمیوه',price:35000,color:0xe68a32,shape:'bottle'},
-  {name:'ماکارونی',price:29000,color:0xe2bd69,shape:'box'},
-  {name:'شکلات',price:25000,color:0x75432e,shape:'box'},
-  {name:'سیب',price:12000,color:0xb84638,shape:'ball'},
-  {name:'قهوه',price:78000,color:0x684532,shape:'box'},
-  {name:'چیپس',price:32000,color:0xe5c44c,shape:'bag'},
-  {name:'پنیر',price:51000,color:0xe7d9a1,shape:'box'},
-  {name:'آب معدنی',price:15000,color:0x83c9e7,shape:'bottle'}
+const money = n => Math.round(n).toLocaleString('fa-IR') + ' تومان';
+const catalog = [
+ {name:'نان تست',price:38000,color:0xc78c4d,shape:'box'},
+ {name:'شیر کم‌چرب',price:46000,color:0xe9eee8,shape:'bottle'},
+ {name:'آب پرتقال',price:59000,color:0xe98a27,shape:'bottle'},
+ {name:'ماکارونی',price:42000,color:0xe0b85c,shape:'box'},
+ {name:'شکلات تلخ',price:67000,color:0x68412d,shape:'box'},
+ {name:'سیب قرمز',price:18000,color:0xb83d32,shape:'ball'},
+ {name:'قهوه',price:128000,color:0x684632,shape:'box'},
+ {name:'چیپس',price:49000,color:0xe3c345,shape:'bag'},
+ {name:'پنیر',price:76000,color:0xe6d9a0,shape:'box'},
+ {name:'آب معدنی',price:22000,color:0x80c7e6,shape:'bottle'},
+ {name:'بیسکویت',price:53000,color:0xb98a53,shape:'box'}
 ];
-const moneyFmt = n => Math.round(n).toLocaleString('fa-IR')+' تومان';
-let scene,camera,renderer,clock,customerGroup,productMeshes=[],basket=[],index=0,scanned=[],total=0,paid=0,changeDue=0,changeGiven=0,drawerCash=500000,scannerFault=null,scanFails=0,phase='scan',paymentType='cash',cashOffered=0,customerNo=1,score=100,waiting=false;
 
-function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2400);}
-function labelSprite(text){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#102333';ctx.beginPath();ctx.roundRect(8,8,496,112,20);ctx.fill();ctx.strokeStyle='#75e1bb';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 42px Tahoma';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,65);const tex=new THREE.CanvasTexture(canvas);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.25,.31,1);return s;}
-function mat(color,roughness=.72,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
-function box(parent,w,h,d,color,x,y,z,material=null){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material||mat(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
-function buildScene(){
- scene=new THREE.Scene();scene.background=new THREE.Color(0x9db9c4);scene.fog=new THREE.Fog(0x9db9c4,14,32);
- camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,70);camera.position.set(0,1.72,5.2);camera.lookAt(0,1.35,-3);
- renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
- scene.add(new THREE.HemisphereLight(0xeaf7ff,0x5b5147,2));const sun=new THREE.DirectionalLight(0xffe5c5,2.4);sun.position.set(-5,9,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
- const floor=box(scene,24,.2,28,0xc6cbc5,0,-.12,-4);floor.receiveShadow=true;
- box(scene,24,5,.3,0xe8ece7,0,2.4,-13);
- for(let x=-10;x<=10;x+=5){const win=new THREE.Mesh(new THREE.PlaneGeometry(3.7,1.9),new THREE.MeshPhysicalMaterial({color:0x8bc8df,transparent:true,opacity:.45,roughness:.2}));win.position.set(x,2.9,-12.82);scene.add(win);box(scene,3.8,.07,.08,0x82999a,x,3.9,-12.7);box(scene,3.8,.07,.08,0x82999a,x,1.9,-12.7);}
- const sign=labelSprite('ERFAN MARKET');sign.position.set(0,4.3,-12.55);sign.scale.set(3.2,.8,1);scene.add(sign);
- // Checkout counter and conveyor belt
- box(scene,4.8,1.05,1.35,0x31545a,0,.55,-.2);
- box(scene,4.5,.12,1.22,0x26343b,0,1.12,-.18);
- box(scene,2.15,.045,1.02,0x65777a,-1.12,1.205,-.18);
- for(let x=-2.1;x<=2.1;x+=.35){const roller=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.05,10),mat(0x9ba8aa,.32,.55));roller.rotation.x=Math.PI/2;roller.position.set(x,1.17,-.18);scene.add(roller);}
- // Scanner bed and glowing scan window
- box(scene,.66,.16,.54,0x202d35,1.35,1.22,-.15);
- const glass=new THREE.Mesh(new THREE.BoxGeometry(.48,.018,.35),new THREE.MeshStandardMaterial({color:0x5af0bf,emissive:0x1cae83,emissiveIntensity:1.8}));glass.position.set(1.35,1.31,-.15);scene.add(glass);
- // POS monitor, stand, keyboard
- box(scene,.13,.5,.13,0x34444a,-1.55,1.42,-.72);
- box(scene,1.75,1.12,.12,0x172832,-1.55,2.03,-.72);
- const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.58,.91),new THREE.MeshBasicMaterial({color:0x102c3a}));screen.position.set(-1.55,2.03,-.645);scene.add(screen);
- box(scene,1.35,.07,.5,0x263a43,-1.55,1.24,-.2);
- for(let i=0;i<3;i++)box(scene,.28,.018,.035,0x8da5a8,-1.98+i*.42,1.29,-.1);
- // Card terminal on customer side
- box(scene,.58,.22,.7,0x26343d,2.05,1.28,-.2);
- box(scene,.43,.31,.045,0x152a36,2.05,1.49,-.32);
- const terminalScreen=new THREE.Mesh(new THREE.PlaneGeometry(.34,.22),new THREE.MeshBasicMaterial({color:0x68dfb3}));terminalScreen.position.set(2.05,1.5,-.294);scene.add(terminalScreen);
- // Cash drawer with visible compartments
- box(scene,1.45,.16,.85,0x202c34,-1.5,.92,.55);
- for(let i=0;i<4;i++)box(scene,.29,.06,.48,0x53636a,-2.02+i*.35,1.035,.55);
- // Room ceiling lights
- for(const x of [-5,0,5]){box(scene,2.1,.06,.45,0xfff2d5,x,4.65,-3);const l=new THREE.PointLight(0xffe9c9,18,12);l.position.set(x,4.2,-3);scene.add(l);}
- // Customer waiting position
- customerGroup=new THREE.Group();scene.add(customerGroup);makeCustomer();
+let scene,camera,renderer,clock,monitorTexture,monitorCanvas,monitorCtx;
+let customer,customerHead,scanner,scannerBeam,handScanner,handLeft,handRight,productsOnBelt=[];
+let order=[],scanned=[],itemIndex=0,total=0,customerNumber=1,score=100;
+let phase='pickup',scannerTaken=false,scannerFault=false,failedScans=0,manualDigits='';
+let payment='cash',cashOffer=0,cashInput='',changeDue=0,changePaid=0,drawerBalance=650000;
+let promptTitle='',promptText='',toastTimer=0,keysDown={};
+
+function material(color,roughness=.72,metalness=0){return color && color.isMaterial ? color : new THREE.MeshStandardMaterial({color,roughness,metalness});}
+function mesh(parent,geometry,mat,x,y,z){const m=new THREE.Mesh(geometry,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function cube(parent,w,h,d,color,x,y,z,rough=.65){return mesh(parent,new THREE.BoxGeometry(w,h,d),material(color,rough),x,y,z);}
+function sphere(parent,r,color,x,y,z,detail=24){return mesh(parent,new THREE.SphereGeometry(r,detail,detail),material(color),x,y,z);}
+function capsule(parent,r,len,color,x,y,z){return mesh(parent,new THREE.CapsuleGeometry(r,len,8,16),material(color),x,y,z);}
+function roundedLabel(text,color='#102b35'){
+ const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');
+ x.fillStyle=color;x.beginPath();x.roundRect(5,5,502,118,20);x.fill();
+ x.strokeStyle='#b8f3dd';x.lineWidth=4;x.stroke();
+ x.fillStyle='#fff';x.font='bold 42px Tahoma';x.textAlign='center';x.textBaseline='middle';x.fillText(text,256,65);
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(1.3,.32,1);return s;
+}
+function setPrompt(title,text){promptTitle=title;promptText=text;$('guideTitle').textContent=title;$('guideText').textContent=text;let k='E';if(title.includes('اسکن'))k='F';if(title.includes('کارت'))k='C';if(title.includes('نقد'))k='0-9';if(title.includes('دستی'))k='0-9 + Enter';if(title.includes('باقی پول'))k='1 تا 7';if(title.includes('تکمیل'))k='Space';$('guideKey').textContent=k;}
+function notify(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2100);}
+function drawMonitor(){
+ if(!monitorCtx)return;
+ const c=monitorCanvas,x=monitorCtx;x.clearRect(0,0,c.width,c.height);
+ const g=x.createLinearGradient(0,0,0,c.height);g.addColorStop(0,'#102c3b');g.addColorStop(1,'#071923');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
+ x.direction='rtl';x.textAlign='right';x.fillStyle='#83e6c0';x.font='bold 29px Tahoma';x.fillText('ERFAN MARKET  |  صندوق شماره ۰۱',c.width-28,42);
+ x.strokeStyle='#36596a';x.lineWidth=2;x.beginPath();x.moveTo(24,62);x.lineTo(c.width-24,62);x.stroke();
+ x.fillStyle='#9ab5c4';x.font='bold 22px Tahoma';x.fillText('شرح کالا',c.width-30,100);x.textAlign='left';x.fillText('قیمت',c.width-200,100);
+ let y=143;
+ scanned.slice(-7).forEach(p=>{x.textAlign='right';x.fillStyle='#eef7f6';x.font='22px Tahoma';x.fillText(p.name,c.width-30,y);x.textAlign='left';x.fillStyle='#9be8c8';x.fillText(p.price.toLocaleString('fa-IR'),c.width-200,y);y+=42;});
+ if(scanned.length===0){x.textAlign='center';x.fillStyle='#708b9b';x.font='22px Tahoma';x.fillText('منتظر اسکن کالا...',c.width/2,190);}
+ x.fillStyle='#163e3c';x.fillRect(20,c.height-92,c.width-40,68);
+ x.textAlign='right';x.fillStyle='#b9ded0';x.font='bold 23px Tahoma';x.fillText('مبلغ کل',c.width-38,c.height-50);
+ x.textAlign='left';x.fillStyle='#8cf0c3';x.font='bold 29px Tahoma';x.fillText(total.toLocaleString('fa-IR')+' تومان',c.width-220,c.height-50);
+ monitorTexture.needsUpdate=true;
+}
+function buildMonitor(){
+ monitorCanvas=document.createElement('canvas');monitorCanvas.width=900;monitorCanvas.height=520;monitorCtx=monitorCanvas.getContext('2d');
+ monitorTexture=new THREE.CanvasTexture(monitorCanvas);monitorTexture.colorSpace=THREE.SRGBColorSpace;
+ const frame=cube(scene,1.65,1.02,.12,0x18252d,-1.05,1.55,.22,.35);
+ const screen=mesh(scene,new THREE.PlaneGeometry(1.48,.85),new THREE.MeshBasicMaterial({map:monitorTexture}),-1.05,1.56,.155);
+ cube(scene,.13,.32,.16,0x293c45,-1.05,1.0,.27);
+ cube(scene,1.1,.07,.52,0x253941,-1.05,.82,.4);
+ for(let r=0;r<3;r++)for(let col=0;col<9;col++)cube(scene,.075,.018,.055,0x71858b,-1.45+col*.1,.87+r*.01,.25+r*.07,.5);
+ drawMonitor();
+}
+function buildScanner(){
+ const g=new THREE.Group();
+ cube(g,.13,.22,.45,0x202d35,0,0,0,.35);
+ cube(g,.11,.22,.12,0x293e48,0,-.15,.1,.3);
+ const lens=mesh(g,new THREE.BoxGeometry(.1,.018,.12),new THREE.MeshBasicMaterial({color:0x5cf4c3,emissive:0x2bb98a}),0,.11,-.12);
+ g.position.set(.8,1.02,.45);g.rotation.x=-.2;scene.add(g);scanner=g;
+ const beam=new THREE.Mesh(new THREE.PlaneGeometry(.45,.018),new THREE.MeshBasicMaterial({color:0x68ffd0,transparent:true,opacity:.85,side:THREE.DoubleSide}));beam.position.set(.8,1.12,-.25);beam.visible=false;scene.add(beam);scannerBeam=beam;
+}
+function buildHands(){
+ const skin=material(0xc78f70,.82),sleeve=material(0x263e55,.88);
+ handLeft=new THREE.Group();handRight=new THREE.Group();
+ capsule(handLeft,.105,.38,0x263e55,0,-.2,0);
+ sphere(handLeft,.12,0xc78f70,0,-.43,-.02);
+ handLeft.position.set(-.48,.65,1.15);scene.add(handLeft);
+ capsule(handRight,.105,.38,0x263e55,0,-.2,0);
+ sphere(handRight,.12,0xc78f70,0,-.43,-.02);
+ handRight.position.set(.48,.65,1.15);scene.add(handRight);
+ handScanner=new THREE.Group();
+ cube(handScanner,.12,.2,.35,0x202d35,0,0,0,.3);
+ cube(handScanner,.1,.12,.1,0x2d414b,0,-.13,.08,.3);
+ const glass=mesh(handScanner,new THREE.BoxGeometry(.09,.015,.09),new THREE.MeshBasicMaterial({color:0x5fffc6,emissive:0x27bd8b}),0,.105,-.1);
+ handScanner.position.set(.45,.65,.72);handScanner.visible=false;scene.add(handScanner);
 }
 function makeCustomer(){
- customerGroup.clear();const shirt=mat([0x4b91a0,0xb66c52,0x7c6ab1,0x527d59,0xd1a24e][customerNo%5]);const skin=mat(0xd9a783);const pants=mat(0x344151);const hair=mat(0x332921);
- const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.68,5,10),shirt);torso.position.set(0,1.45,-3.3);customerGroup.add(torso);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),skin);head.position.set(0,2.12,-3.3);customerGroup.add(head);
- const haircap=new THREE.Mesh(new THREE.SphereGeometry(.28,14,9,0,Math.PI*2,0,Math.PI*.6),hair);haircap.position.set(0,2.2,-3.34);customerGroup.add(haircap);
- for(const x of [-.09,.09]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),mat(0x202020));eye.position.set(x,2.14,-3.04);customerGroup.add(eye);}
- const leg=new THREE.Mesh(new THREE.BoxGeometry(.2,.72,.22),pants);leg.position.set(-.15,.72,-3.3);customerGroup.add(leg);const leg2=leg.clone();leg2.position.x=.15;customerGroup.add(leg2);
-}
-function clearProducts(){productMeshes.forEach(m=>scene.remove(m));productMeshes=[];}
-function createProductMesh(p,i){
- const g=new THREE.Group();let m;
- if(p.shape==='bottle'){m=new THREE.Mesh(new THREE.CylinderGeometry(.14,.17,.55,14),mat(p.color,.3));m.position.y=.34;const neck=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,.15,12),mat(0xe6e8df));neck.position.y=.69;g.add(neck);}
- else if(p.shape==='ball'){m=new THREE.Mesh(new THREE.SphereGeometry(.23,16,12),mat(p.color,.38));m.position.y=.24;}
- else if(p.shape==='bag'){m=new THREE.Mesh(new THREE.BoxGeometry(.35,.52,.18),mat(p.color,.5));m.position.y=.27;}
- else{m=new THREE.Mesh(new THREE.BoxGeometry(.38,.42,.3),mat(p.color,.6));m.position.y=.22;}
- m.castShadow=true;g.add(m);const tag=labelSprite(moneyFmt(p.price));tag.position.set(0,.98,0);tag.scale.set(1.1,.28,1);g.add(tag);
- const name=labelSprite(p.name);name.position.set(0,1.27,0);name.scale.set(.95,.23,1);g.add(name);
- g.position.set(-1.85+(i%4)*.63,1.25,-.2);g.rotation.y=(i%2)*.25;scene.add(g);productMeshes.push(g);
-}
-function makeOrder(){
- basket=[];scanned=[];index=0;total=0;paid=0;changeDue=0;changeGiven=0;scanFails=0;scannerFault=null;
- const count=2+Math.floor(Math.random()*4);for(let i=0;i<count;i++)basket.push(products[Math.floor(Math.random()*products.length)]);
- paymentType=Math.random()<.57?'cash':'card';clearProducts();basket.forEach(createProductMesh);
- $('customerLabel').textContent='مشتری شماره '+customerNo;$('paymentType').textContent=paymentType==='cash'?'پرداخت نقدی':'پرداخت با کارت';
- $('scanStatus').textContent='آماده اسکن';$('scanStatus').className='status good';$('scannerAttempts').textContent='۰';$('manualPanel').classList.add('hidden');$('paymentPanel').classList.add('hidden');$('cashPanel').classList.add('hidden');$('finishBtn').classList.add('hidden');
- phase='scan';waiting=false;renderOrder();toast('مشتری جدید رسید. کالاها را یکی‌یکی اسکن کن.');
-}
-function renderOrder(){
- $('itemsLeft').textContent=Math.max(0,basket.length-index).toLocaleString('fa-IR');
- $('posItems').innerHTML=scanned.map(p=>'<div class="pos-row"><span>'+p.name+'</span><b>'+moneyFmt(p.price)+'</b></div>').join('')||'<div class="pos-empty">هنوز کالایی اسکن نشده</div>';
- $('posTotal').textContent=moneyFmt(total);$('currentProduct').textContent=basket[index]?basket[index].name+' | '+moneyFmt(basket[index].price):'همه کالاها اسکن شدند';
- $('manualPrice').value='';
-}
-function scanAttempt(){
- if(phase!=='scan'||waiting)return;
- if(index>=basket.length){beginPayment();return;}
- const product=basket[index];
- if(!scannerFault&&Math.random()<.16){scannerFault=Math.random()<.62?'battery':'connection';scanFails=0;}
- if(scannerFault){
-  scanFails++;$('scannerAttempts').textContent=scanFails.toLocaleString('fa-IR');
-  if(scanFails<3){$('scanStatus').textContent=scannerFault==='battery'?'شارژ بارکدخوان کم است! دوباره تلاش کن':'خطای اتصال بارکدخوان! دوباره تلاش کن';$('scanStatus').className='status warn';toast('اسکن انجام نشد. دوباره کلید اسکن را فشار بده.');return;}
-  $('scanStatus').textContent='اسکن ناموفق؛ قیمت را دستی وارد کن';$('scanStatus').className='status bad';$('manualPanel').classList.remove('hidden');$('manualPrice').focus();toast('قیمت روی برچسب محصول را در کامپیوتر وارد کن.');return;
+ if(customer)scene.remove(customer);
+ customer=new THREE.Group();scene.add(customer);
+ const shirt=material([0x486f80,0x9a5948,0x665c8e,0x526c50,0x9b7545][customerNumber%5],.92);
+ const skin=material([0xd3a080,0xb97858,0xe0b99a,0x98694e][customerNumber%4],.8);
+ const hair=material([0x30251f,0x4c3427,0x211e1c,0x6c4b35][customerNumber%4],.9);
+ const pants=material(0x34404b);
+ capsule(customer,.34,.55,shirt,0,1.45,-2.4);
+ capsule(customer,.095,.48,shirt,-.43,1.48,-2.4);capsule(customer,.095,.48,shirt,.43,1.48,-2.4);
+ sphere(customer,.12,skin,-.43,1.19,-2.4);sphere(customer,.12,skin,.43,1.19,-2.4);
+ capsule(customer,.105,.48,pants,-.15,.73,-2.4);capsule(customer,.105,.48,pants,.15,.73,-2.4);
+ const head=sphere(customer,.255,skin,0,2.12,-2.4,32);customerHead=head;
+ // ears, nose, jaw, eyes, eyebrows and mouth
+ sphere(customer,.055,skin,-.25,2.12,-2.4);sphere(customer,.055,skin,.25,2.12,-2.4);
+ sphere(customer,.045,skin,0,2.06,-2.17,16);
+ for(const side of [-1,1]){
+  sphere(customer,.028,0x202020,side*.09,2.15,-2.17,12);
+  capsule(customer,.025,.07,hair,side*.09,2.205,-2.18);
  }
- addScanned(product,'scan');}
-function addScanned(product,method){
- scanned.push(product);total+=product.price;index++;scannerFault=null;scanFails=0;
- $('scanStatus').textContent=method==='manual'?'قیمت دستی ثبت شد':'اسکن موفق';$('scanStatus').className='status good';$('scannerAttempts').textContent='۰';$('manualPanel').classList.add('hidden');renderOrder();
- if(index>=basket.length){$('scanStatus').textContent='همه کالاها ثبت شدند';beginPayment();}
+ const mouth=mesh(customer,new THREE.BoxGeometry(.085,.012,.012),material(0x7d3c3a),0,1.985,-2.17);
+ const hairTop=mesh(customer,new THREE.SphereGeometry(.26,24,16,0,Math.PI*2,0,Math.PI*.55),hair,0,2.23,-2.42);
+ // hairline and side locks
+ capsule(customer,.055,.18,hair,-.22,2.13,-2.43);capsule(customer,.055,.18,hair,.22,2.13,-2.43);
+ // Neck
+ capsule(customer,.09,.15,skin,0,1.83,-2.4);
+ // simple collar and shirt seams
+ cube(customer,.26,.07,.05,0xd5d9d3,0,1.78,-2.18,.9);
+ customer.position.y=0;
 }
-function manualEntry(){
- if(phase!=='scan'||index>=basket.length)return;
- const entered=Number($('manualPrice').value);const product=basket[index];
- if(!Number.isFinite(entered)||entered<=0){toast('قیمت معتبر وارد کن.');return;}
- if(entered!==product.price){score=Math.max(0,score-3);$('score').textContent=score.toLocaleString('fa-IR')+'٪';toast('قیمت اشتباه است. برچسب را دوباره بررسی کن.');return;}
- addScanned(product,'manual');
+function buildStore(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x9ab4c0);scene.fog=new THREE.Fog(0x9ab4c0,17,34);
+ camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.08,55);camera.position.set(0,1.68,4.2);camera.lookAt(0,1.58,-2.8);
+ renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.16;
+ scene.add(new THREE.HemisphereLight(0xeaf7ff,0x5a4537,2.15));
+ const key=new THREE.DirectionalLight(0xffe5c7,3.2);key.position.set(-4,8,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene.add(key);
+ const fill=new THREE.PointLight(0x9ddcff,35,16);fill.position.set(4,3,-4);scene.add(fill);
+ cube(scene,24,.18,30,0xb8b9b1,0,-.1,-5,.95);
+ cube(scene,24,5,.25,0xe3e4dd,0,2.45,-13,.95);
+ cube(scene,24,.25,30,0xddd8cc,0,5,-5,.95);
+ // distant aisles and stocked shelves
+ for(const side of [-1,1]){
+  for(let row=0;row<2;row++){
+   const z=-5-row*3.2,x=side*5.2;
+   cube(scene,1.15,2.6,.55,0x344b50,x,1.3,z,.8);
+   for(let level=0;level<4;level++){
+    cube(scene,1.2,.045,.62,0x9caa9e,x,level*.57+.28,z+.02,.8);
+    for(let n=0;n<4;n++){
+     const colors=[0xc16a45,0xd9bd68,0x78a7a0,0x7d8fb4,0xb1b6a4];
+     cube(scene,.18,.28,.22,colors[(n+level+row)%colors.length],x-.42+n*.28,level*.57+.45,z-.02,.65);
+    }
+   }
+  }
+ }
+ // windows and ceiling lights
+ for(let x=-8;x<=8;x+=4){const pane=mesh(scene,new THREE.PlaneGeometry(3.1,2.0),new THREE.MeshPhysicalMaterial({color:0x8cc9df,transparent:true,opacity:.42,roughness:.25}),x,3.0,-12.84);cube(scene,3.2,.05,.08,0x7b9296,x,4.03,-12.75);}
+ for(let x=-5;x<=5;x+=2.5){cube(scene,1.8,.05,.45,0xfff3d9,x,4.75,-4,.4);const lamp=new THREE.PointLight(0xffe6bf,18,10);lamp.position.set(x,4.2,-4);scene.add(lamp);}
+ const sign=roundedLabel('ERFAN MARKET');sign.position.set(0,4.05,-12.65);sign.scale.set(3.4,.82,1);scene.add(sign);
+ // cashier counter in immediate foreground
+ cube(scene,4.9,.85,1.0,0x394c4e,0,.48,.45,.5);
+ cube(scene,4.9,.09,1.08,0x202c32,0,.95,.45,.35);
+ // conveyor and rubber belt
+ cube(scene,2.65,.16,1.35,0x252e32,.85,1.07,-.75,.4);
+ cube(scene,2.48,.025,1.19,0x505b5d,.85,1.17,-.75,.65);
+ for(let x=-.32;x<=2.02;x+=.22){const roller=mesh(scene,new THREE.CylinderGeometry(.035,.035,1.17,12),material(0x98a5a4,.32,.45),x,1.16,-.75);roller.rotation.x=Math.PI/2;}
+ // scanner base and terminal
+ cube(scene,.52,.14,.52,0x202b32,2.05,1.1,.15,.3);
+ cube(scene,.32,.025,.34,0x6bf0c1,2.05,1.19,.15,.22);
+ cube(scene,.55,.18,.5,0x25363e,2.0,1.05,-.05,.4);
+ cube(scene,.45,.28,.06,0x152a34,2.0,1.27,-.22,.3);
+ const cardScreen=mesh(scene,new THREE.PlaneGeometry(.35,.19),new THREE.MeshBasicMaterial({color:0x5fe0ae}),2,1.28,-.184);
+ // cash drawer and note slots
+ cube(scene,1.25,.16,.75,0x202b31,-1.9,.96,.85,.35);
+ for(let i=0;i<5;i++)cube(scene,.21,.045,.52,0x506067,-2.32+i*.21,1.06,.84,.6);
+ buildMonitor();buildScanner();buildHands();makeCustomer();
 }
-function beginPayment(){
- phase='payment';$('manualPanel').classList.add('hidden');$('paymentPanel').classList.remove('hidden');
- $('paymentAmount').textContent=moneyFmt(total);$('paymentType').textContent=paymentType==='cash'?'پرداخت نقدی':'پرداخت با کارت';
- if(paymentType==='card'){$('cashPanel').classList.add('hidden');$('cardPayBtn').classList.remove('hidden');$('cashPayBtn').classList.add('hidden');}
- else{$('cashPanel').classList.remove('hidden');$('cardPayBtn').classList.add('hidden');$('cashPayBtn').classList.remove('hidden');$('cashReceived').value='';}
+function createProduct(p,i){
+ const g=new THREE.Group();let body;
+ if(p.shape==='bottle'){
+  body=mesh(g,new THREE.CylinderGeometry(.12,.16,.46,20),material(p.color,.3),0,.26,0);
+  mesh(g,new THREE.CylinderGeometry(.055,.07,.14,16),material(0xe8e9df,.3),0,.55,0);
+  mesh(g,new THREE.CylinderGeometry(.065,.065,.045,16),material(0x2f7a65,.35),0,.65,0);
+ }else if(p.shape==='ball'){body=sphere(g,.2,p.color,0,.2,0,24);}
+ else if(p.shape==='bag'){body=mesh(g,new THREE.BoxGeometry(.3,.42,.16),material(p.color,.45),0,.22,0);}
+ else{body=mesh(g,new THREE.BoxGeometry(.34,.37,.27),material(p.color,.65),0,.19,0);}
+ const tag=roundedLabel(p.name+'  |  '+p.price.toLocaleString('fa-IR')+' تومان');tag.position.set(0,.95,0);tag.scale.set(1.28,.32,1);g.add(tag);
+ g.position.set(-.2+(i%3)*.78,1.2,-.65-(i%2)*.04);g.rotation.y=(i%2)*.18;scene.add(g);productsOnBelt.push(g);
 }
-function cardPayment(){if(phase!=='payment'||paymentType!=='card')return;paid=total;toast('پرداخت کارت با موفقیت انجام شد.');finishSale();}
-function cashPayment(){
- if(phase!=='payment'||paymentType!=='cash')return;const amount=Number($('cashReceived').value);
- if(!Number.isFinite(amount)||amount<total){toast('مبلغ دریافتی کافی نیست.');return;}
- paid=amount;drawerCash+=paid;changeDue=paid-total;changeGiven=0;$('changeDue').textContent=moneyFmt(changeDue);$('cashPanel').classList.add('hidden');if(changeDue===0){updateChangeUI();finishSale();return;}$('changePanel').classList.remove('hidden');$('changeButtons').innerHTML='';
- [100000,50000,20000,10000,5000,2000,1000].forEach(v=>{const b=document.createElement('button');b.className='cash-note';b.textContent=moneyFmt(v);b.onclick=()=>giveChange(v);$('changeButtons').appendChild(b);});
- updateChangeUI();phase='change';}
-function giveChange(value){
- if(phase!=='change')return;if(changeGiven+value>changeDue){toast('این اسکناس از باقی‌مانده بیشتر است.');return;}
- if(drawerCash<value){toast('این مقدار پول در صندوق موجود نیست.');return;}
- changeGiven+=value;drawerCash-=value;updateChangeUI();if(changeGiven===changeDue){$('changePanel').classList.add('hidden');toast('باقی پول درست تحویل داده شد.');finishSale();}
+function clearBelt(){productsOnBelt.forEach(p=>scene.remove(p));productsOnBelt=[];}
+function updateHud(){
+ $('customerNo').textContent=customerNumber.toLocaleString('fa-IR');
+ $('score').textContent=score.toLocaleString('fa-IR')+'٪';
+ $('hudItems').innerHTML=order.map((p,i)=>'<div class="hud-row '+(i<itemIndex?'done':'')+'"><span>'+p.name+'</span><b>'+money(p.price)+'</b></div>').join('');
+ $('hudTotal').textContent=money(total);
+ $('hudScanned').textContent=itemIndex.toLocaleString('fa-IR')+' / '+order.length.toLocaleString('fa-IR');
+ $('monitorState').textContent=phase==='scan'?'در حال ثبت کالا':phase==='payment'?'در انتظار پرداخت':phase==='change'?'تحویل باقی پول':phase==='done'?'خرید تکمیل شد':'آماده شروع';
+ drawMonitor();
 }
-function updateChangeUI(){$('changeGiven').textContent=moneyFmt(changeGiven);$('changeRemaining').textContent=moneyFmt(changeDue-changeGiven);$('drawerBalance').textContent=moneyFmt(drawerCash);}
-function finishSale(){
- phase='done';$('paymentPanel').classList.add('hidden');$('changePanel').classList.add('hidden');$('finishBtn').classList.remove('hidden');$('scanStatus').textContent='خرید تکمیل شد';$('scanStatus').className='status good';
- $('drawerBalance').textContent=moneyFmt(drawerCash);toast('خرید مشتری تکمیل شد. برای مشتری بعدی آماده شو.');
+function newOrder(){
+ order=[];scanned=[];itemIndex=0;total=0;scannerTaken=false;scannerFault=false;failedScans=0;manualDigits='';cashInput='';changeDue=0;changePaid=0;if(handScanner)handScanner.visible=false;if(handLeft)handLeft.visible=true;
+ const count=3+Math.floor(Math.random()*3);for(let i=0;i<count;i++)order.push(catalog[Math.floor(Math.random()*catalog.length)]);
+ payment=Math.random()<.5?'cash':'card';cashOffer=0;
+ if(payment==='cash'){const extra=[0,20000,50000,100000,150000][Math.floor(Math.random()*5)];cashOffer=Math.ceil((total+extra)/10000)*10000;}
+ clearBelt();order.forEach(createProduct);
+ phase='pickup';setPrompt('۱. بارکدخوان را بردار','برای برداشتن بارکدخوان کلید E را فشار بده.');updateHud();
+ $('paymentHint').textContent='روش پرداخت در پایان خرید مشخص می‌شود.';
 }
-function nextCustomer(){customerNo++;makeCustomer();makeOrder();$('finishBtn').classList.add('hidden');}
-function setupUI(){
- $('scanBtn').onclick=scanAttempt;$('manualSubmit').onclick=manualEntry;$('manualPrice').addEventListener('keydown',e=>{if(e.key==='Enter')manualEntry();});
- $('cardPayBtn').onclick=cardPayment;$('cashPayBtn').onclick=cashPayment;$('finishBtn').onclick=nextCustomer;
- $('helpBtn').onclick=()=>toast('اسکن: کلید E یا دکمه اسکن | ورود دستی: قیمت روی برچسب را وارد کن');
- addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'||e.code==='Space'){e.preventDefault();scanAttempt();}if(e.key==='Escape')toast('برای ادامه کار از دکمه‌های صندوق استفاده کن.');});
+function takeScanner(){
+ if(phase!=='pickup')return;scannerTaken=true;handScanner.visible=true;handLeft.visible=false;phase='scan';
+ setPrompt('۲. کالا را اسکن کن','بارکدخوان در دست توست. برای اسکن هر کالا کلید F را بزن.');notify('بارکدخوان برداشته شد.');updateHud();
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(customerGroup)customerGroup.rotation.y=Math.sin(performance.now()*.0005)*.025;renderer.render(scene,camera);}
+function scan(){
+ if(phase!=='scan')return;
+ if(itemIndex>=order.length){startPayment();return;}
+ if(!scannerTaken){setPrompt('بارکدخوان را بردار','کلید E را بزن تا بارکدخوان را برداری.');return;}
+ if(scannerFault){
+  failedScans++;$('attempts').textContent=failedScans.toLocaleString('fa-IR');
+  if(failedScans>=3){phase='manual';manualDigits='';setPrompt('۳. ورود دستی قیمت','اسکنر سه بار خطا داد. قیمت روی برچسب را با اعداد کیبورد وارد کن و Enter بزن.');notify('قیمت محصول را از روی برچسب بخوان و دستی وارد کن.');}
+  else{setPrompt('خطای بارکدخوان','دوباره F را بزن. تلاش '+failedScans.toLocaleString('fa-IR')+' از ۳');notify('اسکن ناموفق بود. دوباره تلاش کن.');}
+  return;
+ }
+ if(Math.random()<.16){scannerFault=true;failedScans=1;$('attempts').textContent='۱';setPrompt(Math.random()<.5?'شارژ بارکدخوان کم است':'اتصال بارکدخوان قطع شده','تلاش ناموفق ۱ از ۳. دوباره F را بزن؛ بعد از سه تلاش ورود دستی فعال می‌شود.');notify('بارکدخوان این بار اسکن نکرد.');return;}
+ registerProduct('scan');
+}
+function registerProduct(mode){
+ const p=order[itemIndex];scanned.push(p);total+=p.price;itemIndex++;scannerFault=false;failedScans=0;manualDigits='';$('attempts').textContent='۰';
+ scannerBeam.visible=true;setTimeout(()=>{if(scannerBeam)scannerBeam.visible=false;},180);
+ if(mode==='manual')notify('قیمت دستی ثبت شد.');else notify('بیپ! کالا اسکن شد.');
+ if(itemIndex<order.length){setPrompt('ادامه اسکن کالاها','محصول بعدی را اسکن کن. کلید F');}
+ else startPayment();
+ updateHud();
+}
+function startPayment(){
+ phase='payment';scannerBeam.visible=false;
+ if(payment==='card'){setPrompt('۴. دریافت کارت','مشتری کارت داده است. کارت را روی کارت‌خوان بکش: کلید C');$('paymentHint').textContent='پرداخت با کارت';}
+ else{setPrompt('۴. دریافت پول نقد','مشتری '+money(cashOffer)+' داده است. مبلغ را با اعداد کیبورد وارد کن و Enter بزن.');$('paymentHint').textContent='پرداخت نقدی • مبلغ مشتری: '+money(cashOffer);cashInput='';}
+ updateHud();
+}
+function swipeCard(){if(phase!=='payment'||payment!=='card')return;phase='done';setPrompt('پرداخت موفق','پرداخت کارت انجام شد. برای مشتری بعدی Space را بزن.');notify('پرداخت کارت با موفقیت انجام شد.');updateHud();}
+function receiveCash(){if(phase!=='payment'||payment!=='cash')return;const val=Number(cashInput);if(!Number.isFinite(val)||val!==cashOffer){notify('مبلغ واردشده با پولی که مشتری داده مطابقت ندارد. دوباره وارد کن.');cashInput='';return;}drawerBalance+=cashOffer;changeDue=cashOffer-total;changePaid=0;if(changeDue===0){phase='done';setPrompt('پرداخت دقیق انجام شد','نیازی به باقی پول نیست. برای مشتری بعدی Space را بزن.');}else{phase='change';setPrompt('۵. باقی پول را پس بده','مبلغ باقی‌مانده '+money(changeDue)+' است. کلید اسکناس مناسب را انتخاب کن: 1 تا 7');}updateHud();}
+const notes=[100000,50000,20000,10000,5000,2000,1000];
+function giveNote(key){if(phase!=='change')return;const note=notes[Number(key)-1];if(!note)return;if(changePaid+note>changeDue){notify('این اسکناس از باقی پول بیشتر است.');return;}if(drawerBalance<note){notify('این اسکناس در کشوی صندوق موجود نیست.');return;}changePaid+=note;drawerBalance-=note;if(changePaid===changeDue){phase='done';setPrompt('۶. خرید تکمیل شد','باقی پول درست تحویل داده شد. برای مشتری بعدی Space را بزن.');notify('باقی پول کامل تحویل داده شد.');}else{setPrompt('ادامه تحویل باقی پول','باقی‌مانده: '+money(changeDue-changePaid)+' • اسکناس بعدی را با کلید 1 تا 7 انتخاب کن.');}updateHud();}
+function nextCustomer(){if(phase!=='done')return;customerNumber++;makeCustomer();newOrder();notify('مشتری بعدی رسید.');}
+function handleNumber(key){
+ if(phase==='manual'){if(key==='Backspace'){manualDigits=manualDigits.slice(0,-1);}else if(/^[0-9]$/.test(key)){manualDigits+=key;} $('inputDisplay').textContent=manualDigits||'قیمت را وارد کن';}
+ else if(phase==='payment'&&payment==='cash'){if(key==='Backspace'){cashInput=cashInput.slice(0,-1);}else if(/^[0-9]$/.test(key)){cashInput+=key;} $('inputDisplay').textContent=cashInput?Number(cashInput).toLocaleString('fa-IR')+' تومان':'مبلغ نقدی را وارد کن';}
+}
+function enterKey(){
+ if(phase==='manual'){const value=Number(manualDigits);if(value===order[itemIndex].price){registerProduct('manual');}else{score=Math.max(0,score-4);notify('قیمت صحیح نیست. برچسب کالا را بررسی کن.');manualDigits='';$('inputDisplay').textContent='قیمت را دوباره وارد کن';$('score').textContent=score.toLocaleString('fa-IR')+'٪';}}
+ else if(phase==='payment'&&payment==='cash')receiveCash();
+}
+function setupKeyboard(){
+ addEventListener('keydown',e=>{
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(e.repeat)return;
+  if(e.key.toLowerCase()==='e')takeScanner();
+  else if(e.key.toLowerCase()==='f')scan();
+  else if(e.key.toLowerCase()==='c')swipeCard();
+  else if(e.code==='Space')nextCustomer();
+  else if(e.key==='Enter')enterKey();
+  else if(e.key==='Backspace')handleNumber('Backspace');
+  else if(/^[0-9]$/.test(e.key)){if(phase==='change')giveNote(e.key);else handleNumber(e.key);}
+ });
+}
+function animate(){
+ requestAnimationFrame(animate);const t=clock.getElapsedTime();
+ if(customer){customer.position.y=Math.sin(t*1.3)*.012;customer.rotation.y=Math.sin(t*.55)*.025;}
+ if(handScanner&&handScanner.visible){handScanner.rotation.z=Math.sin(t*2)*.025;}
+ renderer.render(scene,camera);
+}
 function resize(){if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
-function start(){buildScene();setupUI();clock=new THREE.Clock();$('drawerBalance').textContent=moneyFmt(drawerCash);$('score').textContent=score.toLocaleString('fa-IR')+'٪';makeOrder();animate();addEventListener('resize',resize);$('intro').classList.add('hidden');$('game').classList.remove('hidden');}
+function start(){
+ buildStore();clock=new THREE.Clock();setupKeyboard();$('drawerCash').textContent=money(drawerBalance);$('inputDisplay').textContent='منتظر دریافت مبلغ';
+ $('startScreen').classList.add('hidden');$('game').classList.remove('hidden');newOrder();animate();addEventListener('resize',resize);
+}
 start();
