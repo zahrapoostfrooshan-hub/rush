@@ -122,7 +122,7 @@ function cardPayment(){if(phase!=='payment'||paymentType!=='card')return;paid=to
 function cashPayment(){
  if(phase!=='payment'||paymentType!=='cash')return;const amount=Number($('cashReceived').value);
  if(!Number.isFinite(amount)||amount<total){toast('مبلغ دریافتی کافی نیست.');return;}
- paid=amount;changeDue=paid-total;changeGiven=0;$('changeDue').textContent=moneyFmt(changeDue);$('cashPanel').classList.add('hidden');$('changePanel').classList.remove('hidden');$('changeButtons').innerHTML='';
+ paid=amount;drawerCash+=paid;changeDue=paid-total;changeGiven=0;$('changeDue').textContent=moneyFmt(changeDue);$('cashPanel').classList.add('hidden');if(changeDue===0){updateChangeUI();finishSale();return;}$('changePanel').classList.remove('hidden');$('changeButtons').innerHTML='';
  [100000,50000,20000,10000,5000,2000,1000].forEach(v=>{const b=document.createElement('button');b.className='cash-note';b.textContent=moneyFmt(v);b.onclick=()=>giveChange(v);$('changeButtons').appendChild(b);});
  updateChangeUI();phase='change';}
 function giveChange(value){
